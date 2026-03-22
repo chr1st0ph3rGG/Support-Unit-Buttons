@@ -6,4 +6,4 @@ ignore:
   - media
 
 optional-dependencies:
-
+  - 13592-masque
