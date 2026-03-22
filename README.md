@@ -34,7 +34,7 @@ To drag a spell **off** a button, hold the modifier key (default: **Shift**) whi
 | Command | Description |
 |---|---|
 | `/sub` | Open the options panel |
-| `/SupportUnitButtons` | Open the options panel (long form) |
+| `/SupportUnitButtons` | Open the options panel |
 
 The options panel is also accessible via **Interface → AddOns → SupportUnitButtons**.
 
