@@ -1,0 +1,38 @@
+{
+  "Lua.runtime.version": "Lua 5.1",
+  "Lua.runtime.builtin": {
+    "basic": "disable",
+    "debug": "disable",
+    "io": "disable",
+    "math": "disable",
+    "os": "disable",
+    "package": "disable",
+    "string": "disable",
+    "table": "disable",
+    "utf8": "disable"
+  },
+  "Lua.workspace.library": [
+    "~/.vscode/extensions/ketho.wow-api-0.22.3/Annotations/Core",
+    "~/.vscode/extensions/ketho.wow-api-0.22.3/Annotations/FrameXML"
+  ],
+  "Lua.diagnostics.globals": [
+    "RAID_TARGET_1",
+    "RAID_TARGET_2",
+    "RAID_TARGET_3",
+    "RAID_TARGET_4",
+    "RAID_TARGET_5",
+    "RAID_TARGET_6",
+    "RAID_TARGET_7",
+    "RAID_TARGET_8",
+    "ACCEPT",
+    "CANCEL",
+    "NORMAL_FONT_COLOR_CODE",
+    "CLOSE",
+    "OKAY",
+    "NOT_BOUND",
+    "LEAVE_VEHICLE",
+    "OFF"
+  ],
+  "Lua.type.weakUnionCheck": true,
+  "Lua.diagnostics.disable": ["assign-type-mismatch"]
+}

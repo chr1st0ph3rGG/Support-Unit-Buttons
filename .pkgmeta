@@ -1,0 +1,9 @@
+package-as: SupportUnitButtons
+enable-nolib-creation: no
+
+ignore:
+  - scripts
+  - media
+
+optional-dependencies:
+

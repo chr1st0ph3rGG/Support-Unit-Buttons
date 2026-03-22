@@ -1,0 +1,10 @@
+lightweight tag 1b2282ec42831a533590972b436bc42888f4e94a 2.1.15-1b2282e
+Author:	Joao Cardoso <jaliddons@gmail.com>
+Date:	Sun Feb 8 21:25:48 2026 +0000
+
+commit 1b2282ec42831a533590972b436bc42888f4e94a
+Author: Joao Cardoso <jaliddons@gmail.com>
+Date:   Sun Feb 8 21:25:48 2026 +0000
+
+    Fixed TOC mistakes, improved workflow.
+

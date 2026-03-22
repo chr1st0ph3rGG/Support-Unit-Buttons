@@ -1,0 +1,44 @@
+## Interface: 20505, 11508, 50503
+## Version: v1.0.0
+## Title: Support Unit Buttons - Core
+## Notes: Dedicated action bar for each party member
+## Author: chr1st0ph3rGG
+## SavedVariables: SupportUnitButtonsDB
+## OptionalDeps: Masque
+
+Libs\LibStub\LibStub.lua
+Libs\C_Everywhere\C_Everywhere.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\AceAddon-3.0\AceAddon-3.0.xml
+Libs\AceEvent-3.0\AceEvent-3.0.xml
+Libs\AceConsole-3.0\AceConsole-3.0.xml
+Libs\AceLocale-3.0\AceLocale-3.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceDB-3.0\AceDB-3.0.xml
+Libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+Libs\LibDBIcon-1.0\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\LibDBIcon-1.0\lib.xml
+Libs\LibSharedMedia-3.0\lib.xml
+Libs\LibDDI-1.0\lib.xml
+Libs\LibSpellRange-1.0\lib.xml
+Libs\LibRangeCheck-3.0\LibRangeCheck-3.0.lua
+Libs\LibActionButton-1.0\LibButtonGlow-1.0\LibButtonGlow-1.0.lua
+Libs\LibActionButton-1.0\LibActionButton-1.0.lua
+Libs\LibDispel\LibDispel.lua
+Libs\CustomTutorials-2.1\CustomTutorials-2.1.lua
+
+Locales\enUS.lua
+Locales\deDE.lua
+Locales\frFR.lua
+Locales\esES.lua
+Locales\itIT.lua
+Locales\koKR.lua
+Locales\ptBR.lua
+Locales\zhCN.lua
+Locales\zhTW.lua
+
+Defaults.lua
+DispelData.lua
+SupportUnitButtons.lua
+Options.lua

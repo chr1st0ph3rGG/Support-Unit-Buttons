@@ -1,0 +1,57 @@
+-------------------------------------------------------------------------------
+-- Defaults.lua
+-------------------------------------------------------------------------------
+
+local AddonName, SUB_NS = ...
+
+SUB_NS.defaults = {
+    profile = {
+        locked                  = false,
+        buttonSize              = 36,
+        buttonSpacing           = 2,
+        sharedCount             = 6,
+        individualCount         = 3,
+        separatorGap            = 8,
+        showPlayer              = true,
+        showPlayerOnlyInParty   = false,
+        showLabels              = true,       -- show name labels while locked
+        showEmptyButtons        = true,       -- keep empty slots visible permanently
+        positionMode            = "anchored", -- "free" | "anchored"
+        anchorDirection         = "vertical", -- "vertical" | "horizontal"
+        anchorGap               = 4,          -- gap between bars in anchored mode (px)
+        anchorX                 = 10,         -- TOPLEFT x offset from UIParent in anchored mode
+        anchorY                 = -100,       -- TOPLEFT y offset from UIParent in anchored mode
+        bars                    = {
+            ["*"] = { x = nil, y = nil },
+        },
+        dragOffModifier         = "SHIFT", -- modifier required to drag a spell OFF a button
+        showSpellRank           = true,
+        spellRankFont           = "2002 Bold",
+        spellRankFontSize       = 9,
+        spellRankColor          = { r = 1, g = 1, b = 1, a = 1 },
+        spellRankOutline        = "OUTLINE",
+        spellRankCorner         = "BOTTOMRIGHT",
+        spellRankOffsetX        = 0,
+        spellRankOffsetY        = 0,
+        showCastCount           = true, -- show casts-until-OOM (spells) or item count
+        castCountFont           = "2002 Bold",
+        castCountFontSize       = 9,
+        castCountSpellColor     = { r = 0.016, g = 0.980, b = 0.969, a = 1 }, -- blau für ZSUBer (#04FAF7)
+        castCountItemColor      = { r = 1, g = 0.8, b = 0.2, a = 1 },         -- gold für Items
+        castCountOutline        = "OUTLINE",
+        castCountCorner         = "TOPLEFT",
+        castCountOffsetX        = 0,
+        castCountOffsetY        = 0,
+        dispelAlert             = true,
+        dispelAlertColor        = { r = 1.0, g = 0.0, b = 0.0 },
+        dispelAlertSoundEnabled = false,
+        dispelAlertSound        = nil, -- LSM sound name; nil = kein Sound
+        dispelAlertSoundChannel = "Master",
+        tutorialPage            = 0,   -- highest tutorial page the player has seen
+    },
+    char = {
+        sharedSlots = {},
+        memberSlots = { ["*"] = {} },
+    },
+    global = {},
+}

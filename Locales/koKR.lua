@@ -1,0 +1,111 @@
+-------------------------------------------------------------------------------
+-- Locales/koKR.lua  –  한국어
+-------------------------------------------------------------------------------
+
+local L = LibStub("AceLocale-3.0"):NewLocale("SupportUnitButtons", "koKR")
+if not L then return end
+
+-- 탭 이름
+L["Bar"]                                                                                             = "바"
+L["Spell"]                                                                                           = "주문"
+L["Dispel"]                                                                                          = "해제"
+
+-- 일반
+L["General"]                                                                                         = "일반"
+L["Show player bar"]                                                                                 = "플레이어 바 표시"
+L["Only in party"]                                                                                   = "파티에서만"
+L["Show the player bar only when you are in a group"]                                                = "그룹에 있을 때만 플레이어 바를 표시합니다"
+L["Always show name labels"]                                                                         = "이름 레이블 항상 표시"
+L["Show the unit name label even when bars are locked.\nLabels are always shown while unlocked."]    =
+"바가 잠겨 있어도 유닛 이름 레이블을 표시합니다.\n잠금 해제 시 레이블은 항상 표시됩니다."
+L["Drag-off modifier"]                                                                               = "제거 수정자"
+L["Modifier key required to drag a spell OFF a button.\nDropping spells onto buttons always works."] =
+"버튼에서 주문을 드래그하여 제거하려면 필요한 수정자 키.\n버튼에 주문을 드롭하는 것은 항상 작동합니다."
+L["Shift"]                                                                                           = "Shift"
+L["Ctrl"]                                                                                            = "Ctrl"
+L["Alt"]                                                                                             = "Alt"
+L["Any"]                                                                                             = "모두"
+
+-- 버튼 레이아웃
+L["Button Layout"]                                                                                   = "버튼 레이아웃"
+L["Button size"]                                                                                     = "버튼 크기"
+L["Width and height of each button (pixels)"]                                                        = "각 버튼의 너비와 높이 (픽셀)"
+L["Button spacing"]                                                                                  = "버튼 간격"
+L["Gap between buttons (pixels)"]                                                                    = "버튼 사이의 간격 (픽셀)"
+L["Shared buttons"]                                                                                  = "공유 버튼"
+L["Number of shared buttons (same spell/item on all bars)"]                                          = "공유 버튼 수 (모든 바에 동일한 주문/아이템)"
+L["Individual buttons"]                                                                              = "개별 버튼"
+L["Number of per-member individual buttons"]                                                         = "멤버별 개별 버튼 수"
+L["Gap shared/individual"]                                                                           = "공유/개별 간격"
+L["Space between the shared and individual button sections (pixels)"]                                = "공유 및 개별 버튼 섹션 사이의 간격 (픽셀)"
+
+-- 바 위치 설정
+L["Bar Positioning"]                                                                                 = "바 위치 설정"
+L["Lock bars"]                                                                                       = "바 잠금"
+L["Prevent bars from being moved by dragging"]                                                       = "드래그로 바를 이동하지 못하도록 방지"
+L["Mode"]                                                                                            = "모드"
+L["Free: drag each bar individually.\nAnchored: all bars move as a group."]                          =
+"자유: 각 바를 개별적으로 드래그합니다.\n고정: 모든 바가 그룹으로 이동합니다."
+L["Free"]                                                                                            = "자유"
+L["Anchored"]                                                                                        = "고정"
+L["Direction"]                                                                                       = "방향"
+L["Vertical"]                                                                                        = "수직"
+L["Horizontal"]                                                                                      = "수평"
+L["Gap between bars"]                                                                                = "바 사이 간격"
+L["Pixels between bars in anchored mode"]                                                            = "고정 모드에서 바 사이의 픽셀"
+L["Reset positions"]                                                                                 = "위치 초기화"
+
+-- 공통 텍스트 (주문 등급 + 시전 횟수)
+L["Font"]                                                                                            = "폰트"
+L["Font size"]                                                                                       = "폰트 크기"
+L["Outline"]                                                                                         = "윤곽선"
+L["None"]                                                                                            = "없음"
+L["Thick outline"]                                                                                   = "두꺼운 윤곽선"
+L["Corner"]                                                                                          = "모서리"
+L["Top left"]                                                                                        = "왼쪽 상단"
+L["Top right"]                                                                                       = "오른쪽 상단"
+L["Bottom left"]                                                                                     = "왼쪽 하단"
+L["Bottom right"]                                                                                    = "오른쪽 하단"
+L["Offset X"]                                                                                        = "오프셋 X"
+L["Horizontal fine-tuning offset (added to the corner's base position)"]                             = "수평 미세 조정 오프셋 (모서리 기본 위치에 추가됨)"
+L["Offset Y"]                                                                                        = "오프셋 Y"
+L["Vertical fine-tuning offset (added to the corner's base position)"]                               = "수직 미세 조정 오프셋 (모서리 기본 위치에 추가됨)"
+L["Color"]                                                                                           = "색상"
+L["Enable"]                                                                                          = "활성화"
+
+-- 주문 등급
+L["Spell Rank"]                                                                                      = "주문 등급"
+L["Show spell rank"]                                                                                 = "주문 등급 표시"
+L["Display the spell rank number on each button"]                                                    = "각 버튼에 주문 등급 번호를 표시합니다"
+
+-- 시전 횟수 / 아이템 수
+L["Cast Count / Item Count"]                                                                         = "시전 횟수 / 아이템 수"
+L["Show how many times a spell can be cast before going OOM,\nor the total item count in bags."]     =
+"마나가 소진되기 전에 주문을 몇 번 시전할 수 있는지 또는\n가방의 총 아이템 수를 표시합니다."
+L["Spell Color"]                                                                                     = "주문 색상"
+L["Color of the cast count number for spells"]                                                       = "주문에 대한 시전 횟수 색상"
+L["Item Color"]                                                                                      = "아이템 색상"
+L["Color of the cast count number for items"]                                                        = "아이템에 대한 시전 횟수 색상"
+
+-- 튜토리얼
+L["Show Tutorial"]                                                                                   = "튜토리얼 표시"
+L["Replay the introductory tutorial"]                                                                = "도입 튜토리얼 다시 보기"
+L["TUTORIAL_TITLE"]                                                                                  = "Support Unit Buttons"
+L["TUTORIAL_P1"]                                                                                     =
+"Support Unit Buttons는 각 파티 멤버를 위한 액션 바를 추가합니다.\n\n주문책이나 가방에서 주문 또는 아이템을 버튼으로 드래그하세요. 버튼을 클릭하면 해당 바의 유닛에게 주문을 시전하거나 아이템을 사용합니다. 기본적으로 버튼 바는 잠금 해제 상태이며 이름 레이블을 표시하여 어느 바가 어느 유닛에 속하는지 쉽게 식별할 수 있습니다. 바를 설정한 후 잠금을 설정하여 레이블을 숨기고 실수로 위치를 바꾸는 것을 방지할 수 있습니다.\n\nSupport Button에는 두 가지 유형이 있습니다:\n\n - 공유 버튼 (왼쪽 섹션): 전체 그룹에 동일한 주문이나 아이템을 보유합니다.\n\n - 개별 버튼 (오른쪽 섹션): 플레이어별로 다른 주문을 보유할 수 있습니다 (플레이어별 설정) – 유닛/플레이어별 힐이나 버프에 적합합니다.\n\n공유 및 개별 버튼의 수는 옵션에서 설정할 수 있습니다.\n버튼에서 주문을 제거하려면 드래그하는 동안 수정자 키 (기본값: Shift)를 누르세요. 수정자 없이도 언제든지 버튼에 새 주문/아이템을 드롭할 수 있습니다."
+L["TUTORIAL_P2"]                                                                                     =
+"유닛 버튼에는 할당된 주문이나 아이템에 대한 추가 정보가 표시됩니다:\n- 주문 등급 (해당하는 경우)\n- 마나가 소진될 때까지의 시전 횟수 (주문의 경우) 또는 가방의 총 아이템 수\n- 할당된 주문으로 해제할 수 있는 디버프가 유닛에게 있을 경우 빨간색 테두리.\n\n이 설정들은 옵션에서 활성화하거나 비활성화할 수 있습니다."
+L["TUTORIAL_P3"]                                                                                     =
+"/sub 또는 /SupportUnitButtons를 입력하면 언제든지 옵션 패널을 열 수 있습니다.\n\n다음 경로에서도 찾을 수 있습니다:\n\n Interface > AddOns > SupportUnitButtons."
+L["Open Options"]                                                                                    = "옵션 열기"
+
+-- 해제 경고
+L["Dispel Alert"]                                                                                    = "해제 경고"
+L["Show a marching-ants border on buttons that can dispel a debuff the unit currently has."]         =
+"유닛이 현재 가진 디버프를 해제할 수 있는 버튼에 애니메이션 테두리를 표시합니다."
+L["Border Color"]                                                                                    = "테두리 색상"
+L["Sound"]                                                                                           = "사운드"
+L["Activate sound"]                                                                                  = "사운드 활성화"
+L["Plays a sound when a party member gets a dispellable debuff."]                                    = "파티 멤버가 해제 가능한 디버프를 받을 때 사운드를 재생합니다."
+L["Channel"]                                                                                         = "채널"
+L["Audio Channel for Dispel Alert Sound"]                                                            = "해제 경고 사운드의 오디오 채널"

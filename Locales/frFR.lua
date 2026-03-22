@@ -1,0 +1,117 @@
+-------------------------------------------------------------------------------
+-- Locales/frFR.lua  –  Français
+-------------------------------------------------------------------------------
+
+local L = LibStub("AceLocale-3.0"):NewLocale("SupportUnitButtons", "frFR")
+if not L then return end
+
+-- Onglets
+L["Bar"]                                                                                             = "Barre"
+L["Spell"]                                                                                           = "Sort"
+L["Dispel"]                                                                                          = "Dissipation"
+
+-- Général
+L["General"]                                                                                         = "Général"
+L["Show player bar"]                                                                                 = "Afficher la barre du joueur"
+L["Only in party"]                                                                                   = "Seulement en groupe"
+L["Show the player bar only when you are in a group"]                                                =
+"Affiche la barre du joueur seulement lorsque vous êtes dans un groupe"
+L["Always show name labels"]                                                                         = "Toujours afficher les étiquettes de nom"
+L["Show the unit name label even when bars are locked.\nLabels are always shown while unlocked."]    =
+"Affiche le nom de l'unité même quand les barres sont verrouillées.\nLes étiquettes sont toujours affichées quand déverrouillées."
+L["Drag-off modifier"]                                                                               = "Modificateur de retrait"
+L["Modifier key required to drag a spell OFF a button.\nDropping spells onto buttons always works."] =
+"Touche modificatrice requise pour retirer un sort d'un bouton.\nDéposer des sorts sur les boutons fonctionne toujours."
+L["Shift"]                                                                                           = "Maj"
+L["Ctrl"]                                                                                            = "Ctrl"
+L["Alt"]                                                                                             = "Alt"
+L["Any"]                                                                                             = "N'importe laquelle"
+
+-- Disposition des boutons
+L["Button Layout"]                                                                                   = "Disposition des boutons"
+L["Button size"]                                                                                     = "Taille des boutons"
+L["Width and height of each button (pixels)"]                                                        = "Largeur et hauteur de chaque bouton (pixels)"
+L["Button spacing"]                                                                                  = "Espacement des boutons"
+L["Gap between buttons (pixels)"]                                                                    = "Espace entre les boutons (pixels)"
+L["Shared buttons"]                                                                                  = "Boutons partagés"
+L["Number of shared buttons (same spell/item on all bars)"]                                          =
+"Nombre de boutons partagés (même sort/objet sur toutes les barres)"
+L["Individual buttons"]                                                                              = "Boutons individuels"
+L["Number of per-member individual buttons"]                                                         = "Nombre de boutons individuels par membre"
+L["Gap shared/individual"]                                                                           = "Écart partagé/individuel"
+L["Space between the shared and individual button sections (pixels)"]                                =
+"Espace entre les sections de boutons partagés et individuels (pixels)"
+
+-- Positionnement des barres
+L["Bar Positioning"]                                                                                 = "Positionnement des barres"
+L["Lock bars"]                                                                                       = "Verrouiller les barres"
+L["Prevent bars from being moved by dragging"]                                                       = "Empêche le déplacement des barres par glissement"
+L["Mode"]                                                                                            = "Mode"
+L["Free: drag each bar individually.\nAnchored: all bars move as a group."]                          =
+"Libre : faites glisser chaque barre individuellement.\nAncrée : toutes les barres se déplacent en groupe."
+L["Free"]                                                                                            = "Libre"
+L["Anchored"]                                                                                        = "Ancrée"
+L["Direction"]                                                                                       = "Direction"
+L["Vertical"]                                                                                        = "Vertical"
+L["Horizontal"]                                                                                      = "Horizontal"
+L["Gap between bars"]                                                                                = "Écart entre les barres"
+L["Pixels between bars in anchored mode"]                                                            = "Pixels entre les barres en mode ancré"
+L["Reset positions"]                                                                                 = "Réinitialiser les positions"
+
+-- Textes communs (Rang du sort + Nombre d'incantations)
+L["Font"]                                                                                            = "Police"
+L["Font size"]                                                                                       = "Taille de police"
+L["Outline"]                                                                                         = "Contour"
+L["None"]                                                                                            = "Aucun"
+L["Thick outline"]                                                                                   = "Contour épais"
+L["Corner"]                                                                                          = "Coin"
+L["Top left"]                                                                                        = "En haut à gauche"
+L["Top right"]                                                                                       = "En haut à droite"
+L["Bottom left"]                                                                                     = "En bas à gauche"
+L["Bottom right"]                                                                                    = "En bas à droite"
+L["Offset X"]                                                                                        = "Décalage X"
+L["Horizontal fine-tuning offset (added to the corner's base position)"]                             =
+"Décalage de réglage fin horizontal (ajouté à la position de base du coin)"
+L["Offset Y"]                                                                                        = "Décalage Y"
+L["Vertical fine-tuning offset (added to the corner's base position)"]                               =
+"Décalage de réglage fin vertical (ajouté à la position de base du coin)"
+L["Color"]                                                                                           = "Couleur"
+L["Enable"]                                                                                          = "Activer"
+
+-- Rang du sort
+L["Spell Rank"]                                                                                      = "Rang du sort"
+L["Show spell rank"]                                                                                 = "Afficher le rang du sort"
+L["Display the spell rank number on each button"]                                                    = "Affiche le numéro de rang du sort sur chaque bouton"
+
+-- Nombre d'incantations / d'objets
+L["Cast Count / Item Count"]                                                                         = "Nombre d'incantations / d'objets"
+L["Show how many times a spell can be cast before going OOM,\nor the total item count in bags."]     =
+"Affiche combien de fois un sort peut être lancé avant d'être à court de mana,\nou le nombre total d'objets dans les sacs."
+L["Spell Color"]                                                                                     = "Couleur des sorts"
+L["Color of the cast count number for spells"]                                                       = "Couleur du nombre d'incantations pour les sorts"
+L["Item Color"]                                                                                      = "Couleur des objets"
+L["Color of the cast count number for items"]                                                        = "Couleur du nombre d'incantations pour les objets"
+
+-- Tutoriel
+L["Show Tutorial"]                                                                                   = "Afficher le tutoriel"
+L["Replay the introductory tutorial"]                                                                = "Rejouer le tutoriel d'introduction"
+L["TUTORIAL_TITLE"]                                                                                  = "Support Unit Buttons"
+L["TUTORIAL_P1"]                                                                                     =
+"Support Unit Buttons ajoute une barre d'action pour chaque membre du groupe.\n\nFaites glisser des sorts ou des objets depuis votre livre de sorts ou vos sacs vers les boutons. Cliquer sur un bouton lance le sort – ou utilise l'objet – sur l'unité de cette barre. Par défaut, les barres de boutons sont déverrouillées et affichent des étiquettes de nom pour faciliter l'identification de quelle barre appartient à quelle unité. Une fois les barres configurées, vous pouvez les verrouiller pour masquer les étiquettes et éviter les repositionnements accidentels.\n\nVous disposez de deux types de Support Buttons :\n\n - Les boutons partagés (section gauche) contiennent le même sort ou objet pour tout le groupe.\n\n - Les boutons individuels (section droite) peuvent contenir un sort différent par joueur (spécifique au joueur) – idéal pour les soins ou les buffs spécifiques à une unité.\n\nLe nombre de boutons partagés et individuels peut être configuré dans les options.\nPour retirer un sort d'un bouton, maintenez la touche modificatrice (par défaut : Maj) tout en faisant glisser. Vous pouvez toujours déposer un nouveau sort/objet sur un bouton sans aucun modificateur."
+L["TUTORIAL_P2"]                                                                                     =
+"Un bouton d'unité affiche des informations supplémentaires sur le sort ou l'objet assigné :\n- Rang du sort (le cas échéant)\n- Nombre d'incantations avant d'être à court de mana (pour les sorts) ou quantité totale dans les sacs\n- Un bord rouge si l'unité a actuellement un débuff pouvant être dissipé avec le sort assigné.\n\nCeux-ci peuvent être activés ou désactivés dans les options."
+L["TUTORIAL_P3"]                                                                                     =
+"Tapez /sub ou /SupportUnitButtons pour ouvrir le panneau des Options à tout moment.\n\nVous pouvez également le trouver sous :\n\n Interface > AddOns > SupportUnitButtons."
+L["Open Options"]                                                                                    = "Ouvrir les options"
+
+-- Alerte de dissipation
+L["Dispel Alert"]                                                                                    = "Alerte de dissipation"
+L["Show a marching-ants border on buttons that can dispel a debuff the unit currently has."]         =
+"Affiche une bordure animée sur les boutons pouvant dissiper un débuff actuel de l'unité."
+L["Border Color"]                                                                                    = "Couleur de la bordure"
+L["Sound"]                                                                                           = "Son"
+L["Activate sound"]                                                                                  = "Activer le son"
+L["Plays a sound when a party member gets a dispellable debuff."]                                    =
+"Joue un son quand un membre du groupe reçoit un débuff dissipable."
+L["Channel"]                                                                                         = "Canal"
+L["Audio Channel for Dispel Alert Sound"]                                                            = "Canal audio pour le son d'alerte de dissipation"

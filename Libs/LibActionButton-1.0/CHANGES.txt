@@ -1,0 +1,94 @@
+Changes since tag 0.57
+
+commit 004f030840fb367f05a458e4e3d3619f02df2186
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Thu Jan 22 20:48:48 2026 +0100
+
+    Use C_Spell.GetSpellDisplayCount when appropriate
+    
+    Fixes a secret comparison error for spell buttons
+
+commit d437febf91703c7e9817af1c564d39232c06b28e
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Thu Jan 22 20:48:07 2026 +0100
+
+    Factor display count computation into the button type prototype
+
+commit ef7d8c7cf98c0a221a16974eb917dbf963221124
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Tue Jan 20 16:59:05 2026 +0100
+
+    Check cooldown info for sanity before using them with ApplyCooldown
+
+commit c2cf2990ed1ddc907ddfa80a046ff60f859b3261
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Sat Jan 17 15:55:02 2026 +0100
+
+    Remove button state override on mouse up
+    
+    The issue this was designed to fix has seemingly been fixed in the game,
+    and it ended up causing issues with button clicks when keybindings and
+    mouse clicks are combined in certain ways.
+
+commit 4fc8d919def3fd96d26c6a248e1c28d16f825ba4
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Fri Jan 16 09:49:45 2026 +0100
+
+    Disable use of vanilla overlay glow for now
+
+commit 90c63511a0bcb28364219a61492f7e9a098d353a
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Fri Jan 16 00:11:44 2026 +0100
+
+    Limit using ActionButtonSpellAlertManager to retail
+    
+    Its broken, but present, on TBC Anniversary. Thanks Blizzard.
+
+commit 72510e09490fa2aa7c4f19a720d77e85452e84fd
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Wed Jan 14 15:18:07 2026 +0100
+
+    Update click handling for BCC Annivesary
+
+commit d0baa26997e9b3b85e96fdba3971cdfd07569f97
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Mon Dec 15 09:53:27 2025 +0100
+
+    Update event registration for TBC Classic 2.5.5
+
+commit 11d3e2b6a424a1114080cd4db78f1b2e88c79516
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Mon Dec 15 09:27:24 2025 +0100
+
+    Use ActionButtonSpellAlertManager for proc glow
+
+commit dad6203f1295bc5ebf60c7ae7dad86f8dd312f4d
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Mon Dec 15 08:41:21 2025 +0100
+
+    Fix pre-12 charge info handling
+
+commit f600a42d4ad3a2d9e00ec4f94232a2a603c0254e
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Fri Dec 12 14:03:55 2025 +0100
+
+    Update TOC for recent releases and Midnight
+
+commit 50fabf9e37377b3ace8c7e4566b0e4a337428e56
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Fri Dec 12 14:01:13 2025 +0100
+
+    Use GetActionDisplayCount if available in Midnight
+
+commit 046186d19b24fe93b2a72b09a7f35f9498d5768b
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Fri Dec 12 14:00:39 2025 +0100
+
+    Update Cooldown API for Midnight
+
+commit d3ac3d3d324c7cb9b8dab17ea555aab5da7e33d0
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Fri Dec 12 13:58:26 2025 +0100
+
+    Update event registration for Midnight
+
