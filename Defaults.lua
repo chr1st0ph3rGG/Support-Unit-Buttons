@@ -47,11 +47,23 @@ SUB_NS.defaults = {
         dispelAlertSoundEnabled = false,
         dispelAlertSound        = nil, -- LSM sound name; nil = kein Sound
         dispelAlertSoundChannel = "Master",
+        showBuffStatus          = true,
+        buffStatusCorner        = "BOTTOMLEFT",
+        buffStatusFont          = "2002 Bold",
+        buffStatusFontSize      = 9,
+        buffStatusColor         = { r = 1.0, g = 1.0, b = 0.0, a = 1 }, -- gelb
+        buffStatusLowColor      = { r = 1.0, g = 0.0, b = 0.0, a = 1 }, -- rot wenn unter Schwellwert
+        buffStatusLowThreshold  = 60,                                     -- Sekunden
+        buffStatusOutline       = "OUTLINE",
+        buffStatusOffsetX       = 0,
+        buffStatusOffsetY       = 0,
         tutorialPage            = 0,   -- highest tutorial page the player has seen
     },
     char = {
         sharedSlots = {},
         memberSlots = { ["*"] = {} },
     },
-    global = {},
+    global = {
+        buffSpells = {},  -- Zaubernamen die als Buff-Zauber bekannt sind (baut sich mit der Zeit auf)
+    },
 }

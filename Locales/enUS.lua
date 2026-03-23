@@ -111,3 +111,10 @@ L["Activate sound"]                                                             
 L["Plays a sound when a party member gets a dispellable debuff."]                                    = true
 L["Channel"]                                                                                         = true
 L["Audio Channel for Dispel Alert Sound"]                                                            = true
+
+-- Buff Status
+L["Buff Status"]                                                                                     = true
+L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."] = true
+L["Low threshold (sec)"]                                                                             = true
+L["Switch to the low-time color when remaining duration drops below this value (seconds)."]          = true
+L["Low-time color"]                                                                                  = true

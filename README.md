@@ -12,6 +12,7 @@ Compatible with **Classic**, **TBC Classic**, **Classic MoP**
     - **Shared buttons** — left section holds the same spell/item for all bars
     - **Individual buttons** — right section holds a different spell/item per member
 - **Dispel alert** — pulsing coloured border on buttons whose spell can dispel a debuff the unit currently has, with optional sound
+- **Buff status** — shows remaining buff duration on the button when your spell is active as a buff on the target; turns red (configurable) when under a minute; shows `-` when the buff has expired
 - **Cast count** — shows how many times a spell can be cast before going OOM, or item count in bags
 - **Spell rank** — displays the rank number on Classic multi-rank spells
 - **Anchored or free positioning** — stack bars vertically/horizontally as a group, or drag each bar individually
@@ -58,6 +59,7 @@ The options panel is also accessible via **Interface → AddOns → SupportUnitB
 ### Spell tab
 - **Spell Rank** — toggle and style the rank label (font, size, colour, corner, offset)
 - **Cast Count / Item Count** — toggle and style the OOM counter / item count (separate colours for spells and items)
+- **Buff Status** — toggle and style the buff duration indicator (font, size, corner, offset, normal colour, low-time colour and threshold in seconds)
 
 ### Dispel tab
 - Enable/disable the dispel alert border

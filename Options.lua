@@ -542,6 +542,167 @@ function SUB:BuildOptionsTable()
                             },
                         },
                     },
+
+                    buffStatus = {
+                        name   = L["Buff Status"],
+                        type   = "group",
+                        inline = true,
+                        order  = 3,
+                        args   = {
+                            showBuffStatus = {
+                                name  = L["Enable"],
+                                desc  = L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."],
+                                type  = "toggle",
+                                order = 1,
+                                get   = function() return self.db.profile.showBuffStatus end,
+                                set   = function(_, v)
+                                    self.db.profile.showBuffStatus = v
+                                    self:UpdateAllBuffStatuses()
+                                end,
+                            },
+                            buffStatusFont = {
+                                name        = L["Font"],
+                                type        = "select",
+                                order       = 2,
+                                disabled    = function() return not self.db.profile.showBuffStatus end,
+                                values      = LSM:List("font"),
+                                itemControl = "DDI-Font",
+                                get         = function()
+                                    local fonts   = LSM:List("font")
+                                    local current = self.db.profile.buffStatusFont
+                                    for i, v in next, fonts do
+                                        if v == current then return i end
+                                    end
+                                end,
+                                set         = function(_, i)
+                                    self.db.profile.buffStatusFont = LSM:List("font")[i]
+                                    self:UpdateAllBuffStatuses()
+                                end,
+                            },
+                            buffStatusFontSize = {
+                                name     = L["Font size"],
+                                type     = "range",
+                                min      = 6,
+                                max      = 20,
+                                step     = 1,
+                                order    = 3,
+                                disabled = function() return not self.db.profile.showBuffStatus end,
+                                get      = function() return self.db.profile.buffStatusFontSize end,
+                                set      = function(_, v)
+                                    self.db.profile.buffStatusFontSize = v
+                                    self:UpdateAllBuffStatuses()
+                                end,
+                            },
+                            buffStatusOutline = {
+                                name     = L["Outline"],
+                                type     = "select",
+                                order    = 4,
+                                disabled = function() return not self.db.profile.showBuffStatus end,
+                                values   = {
+                                    NONE         = L["None"],
+                                    OUTLINE      = L["Outline"],
+                                    THICKOUTLINE = L["Thick outline"],
+                                },
+                                get      = function() return self.db.profile.buffStatusOutline end,
+                                set      = function(_, v)
+                                    self.db.profile.buffStatusOutline = v
+                                    self:UpdateAllBuffStatuses()
+                                end,
+                            },
+                            buffStatusCorner = {
+                                name     = L["Corner"],
+                                type     = "select",
+                                order    = 5,
+                                disabled = function() return not self.db.profile.showBuffStatus end,
+                                values   = {
+                                    TOPLEFT     = L["Top left"],
+                                    TOPRIGHT    = L["Top right"],
+                                    BOTTOMLEFT  = L["Bottom left"],
+                                    BOTTOMRIGHT = L["Bottom right"],
+                                },
+                                get      = function() return self.db.profile.buffStatusCorner end,
+                                set      = function(_, v)
+                                    self.db.profile.buffStatusCorner = v
+                                    self:UpdateAllBuffStatuses()
+                                end,
+                            },
+                            buffStatusOffsetX = {
+                                name     = L["Offset X"],
+                                type     = "range",
+                                min      = -20,
+                                max      = 20,
+                                step     = 1,
+                                order    = 6,
+                                disabled = function() return not self.db.profile.showBuffStatus end,
+                                get      = function() return self.db.profile.buffStatusOffsetX end,
+                                set      = function(_, v)
+                                    self.db.profile.buffStatusOffsetX = v
+                                    self:UpdateAllBuffStatuses()
+                                end,
+                            },
+                            buffStatusOffsetY = {
+                                name     = L["Offset Y"],
+                                type     = "range",
+                                min      = -20,
+                                max      = 20,
+                                step     = 1,
+                                order    = 7,
+                                disabled = function() return not self.db.profile.showBuffStatus end,
+                                get      = function() return self.db.profile.buffStatusOffsetY end,
+                                set      = function(_, v)
+                                    self.db.profile.buffStatusOffsetY = v
+                                    self:UpdateAllBuffStatuses()
+                                end,
+                            },
+                            buffStatusColor = {
+                                name     = L["Color"],
+                                type     = "color",
+                                hasAlpha = true,
+                                order    = 8,
+                                disabled = function() return not self.db.profile.showBuffStatus end,
+                                get      = function()
+                                    local c = self.db.profile.buffStatusColor
+                                    return c.r, c.g, c.b, c.a
+                                end,
+                                set      = function(_, r, g, b, a)
+                                    local c = self.db.profile.buffStatusColor
+                                    c.r, c.g, c.b, c.a = r, g, b, a
+                                    self:UpdateAllBuffStatuses()
+                                end,
+                            },
+                            buffStatusLowThreshold = {
+                                name     = L["Low threshold (sec)"],
+                                desc     = L["Switch to the low-time color when remaining duration drops below this value (seconds)."],
+                                type     = "range",
+                                min      = 0,
+                                max      = 600,
+                                step     = 5,
+                                order    = 9,
+                                disabled = function() return not self.db.profile.showBuffStatus end,
+                                get      = function() return self.db.profile.buffStatusLowThreshold end,
+                                set      = function(_, v)
+                                    self.db.profile.buffStatusLowThreshold = v
+                                    self:UpdateAllBuffStatuses()
+                                end,
+                            },
+                            buffStatusLowColor = {
+                                name     = L["Low-time color"],
+                                type     = "color",
+                                hasAlpha = true,
+                                order    = 10,
+                                disabled = function() return not self.db.profile.showBuffStatus end,
+                                get      = function()
+                                    local c = self.db.profile.buffStatusLowColor
+                                    return c.r, c.g, c.b, c.a
+                                end,
+                                set      = function(_, r, g, b, a)
+                                    local c = self.db.profile.buffStatusLowColor
+                                    c.r, c.g, c.b, c.a = r, g, b, a
+                                    self:UpdateAllBuffStatuses()
+                                end,
+                            },
+                        },
+                    },
                 },
             },
 

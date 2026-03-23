@@ -114,3 +114,12 @@ L["Plays a sound when a party member gets a dispellable debuff."]               
 "Reproduce un sonido cuando un miembro del grupo recibe un debuff disipable."
 L["Channel"]                                                                                         = "Canal"
 L["Audio Channel for Dispel Alert Sound"]                                                            = "Canal de audio para el sonido de alerta de disipación"
+
+-- Estado del buff
+L["Buff Status"]                                                                                     = "Estado del buff"
+L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."] =
+"Muestra la duración restante del buff en la esquina del botón cuando el hechizo está activo en el objetivo, o \"-\" si no está activo."
+L["Low threshold (sec)"]                                                                             = "Umbral bajo (seg)"
+L["Switch to the low-time color when remaining duration drops below this value (seconds)."]          =
+"Cambia al color de tiempo bajo cuando la duración restante cae por debajo de este valor (segundos)."
+L["Low-time color"]                                                                                  = "Color tiempo bajo"

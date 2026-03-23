@@ -108,3 +108,12 @@ L["Activate sound"]                                                             
 L["Plays a sound when a party member gets a dispellable debuff."]                                    = "當隊伍成員獲得可驅散的減益效果時播放音效。"
 L["Channel"]                                                                                         = "頻道"
 L["Audio Channel for Dispel Alert Sound"]                                                            = "驅散提醒音效的音訊頻道"
+
+-- 增益狀態
+L["Buff Status"]                                                                                     = "增益狀態"
+L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."] =
+"當法術作為增益效果在目標上生效時，在按鈕角落顯示剩餘持續時間，若未生效則顯示\"-\"。"
+L["Low threshold (sec)"]                                                                             = "低閾值（秒）"
+L["Switch to the low-time color when remaining duration drops below this value (seconds)."]          =
+"當剩餘時間低於此值（秒）時切換至低時間顏色。"
+L["Low-time color"]                                                                                  = "低時間顏色"

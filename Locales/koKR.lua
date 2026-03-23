@@ -109,3 +109,12 @@ L["Activate sound"]                                                             
 L["Plays a sound when a party member gets a dispellable debuff."]                                    = "파티 멤버가 해제 가능한 디버프를 받을 때 사운드를 재생합니다."
 L["Channel"]                                                                                         = "채널"
 L["Audio Channel for Dispel Alert Sound"]                                                            = "해제 경고 사운드의 오디오 채널"
+
+-- 버프 상태
+L["Buff Status"]                                                                                     = "버프 상태"
+L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."] =
+"버프가 대상에게 활성화되어 있을 때 버튼 모서리에 남은 버프 지속 시간을 표시하고, 활성화되어 있지 않으면 \"-\"를 표시합니다."
+L["Low threshold (sec)"]                                                                             = "낮은 임계값 (초)"
+L["Switch to the low-time color when remaining duration drops below this value (seconds)."]          =
+"남은 시간이 이 값(초) 아래로 떨어지면 낮은 시간 색상으로 전환합니다."
+L["Low-time color"]                                                                                  = "낮은 시간 색상"

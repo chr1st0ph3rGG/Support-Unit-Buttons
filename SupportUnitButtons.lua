@@ -229,12 +229,15 @@ end
 
 -- Called when a unit's auras change.
 function SUB:OnUnitAura(_, unit)
-    if not self.db.profile.dispelAlert then return end
-    local wasActive = self.dispelActiveUnits[unit]
-    self:UpdateDispelHighlightsForUnit(unit)
-    -- Sound nur bei Transition false→true (neuer dispellbarer Debuff)
-    if self.dispelActiveUnits[unit] and not wasActive then
-        self:PlayDispelAlertSound()
+    if self.db.profile.dispelAlert then
+        local wasActive = self.dispelActiveUnits[unit]
+        self:UpdateDispelHighlightsForUnit(unit)
+        if self.dispelActiveUnits[unit] and not wasActive then
+            self:PlayDispelAlertSound()
+        end
+    end
+    if self.db.profile.showBuffStatus then
+        self:UpdateBuffStatusesForUnit(unit)
     end
 end
 
@@ -273,6 +276,9 @@ end
 
 function SUB:OnInitialize()
     self.db = AceDB:New("SupportUnitButtonsDB", defaults)
+    -- knownBuffSpells auf die persistente global-Tabelle zeigen lassen,
+    -- damit sich das Wissen über Buff-Zauber sitzungsübergreifend aufbaut.
+    knownBuffSpells = self.db.global.buffSpells
 
     if Masque then
         self.masqueGroup = Masque:Group("SupportUnitButtons", "Buttons")
@@ -357,6 +363,19 @@ function SUB:OnEnable()
     -- Show tutorial automatically the first time (TriggerTutorial is a no-op
     -- once tutorialPage >= 5, so this only fires on a fresh profile).
     self:TriggerTutorial(5)
+
+    -- Buff-Status Countdown-Ticker: aktualisiert verbleibende Zeit jede Sekunde.
+    local buffTicker = CreateFrame("Frame")
+    buffTicker._t    = 0
+    buffTicker:SetScript("OnUpdate", function(ticker, elapsed)
+        ticker._t = ticker._t + elapsed
+        if ticker._t >= 1 then
+            ticker._t = 0
+            if SUB.db and SUB.db.profile and SUB.db.profile.showBuffStatus then
+                SUB:UpdateAllBuffStatuses()
+            end
+        end
+    end)
 end
 
 function SUB:ChatCommand()
@@ -466,6 +485,14 @@ local function AttachCastCountText(btn)
     fs:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
     fs:SetText("")
     btn.SUB_castCountText = fs
+end
+
+-- Attach a buff-status FontString to a button (corner set dynamically on update).
+local function AttachBuffStatusText(btn)
+    local fs = btn:CreateFontString(nil, "OVERLAY")
+    fs:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
+    fs:SetText("")
+    btn.SUB_buffStatusText = fs
 end
 
 -- Returns how many times the player can cast the spell before going OOM,
@@ -595,6 +622,7 @@ function SUB:CreateBar(unit)
         WrapButtonForUnitTarget(header, btn)
         AttachRankText(btn)
         AttachCastCountText(btn)
+        AttachBuffStatusText(btn)
         if self.masqueGroup then self.masqueGroup:AddButton(btn) end
         barData.sharedButtons[i] = btn
         self:RestoreSharedButton(unit, btn, i)
@@ -611,6 +639,7 @@ function SUB:CreateBar(unit)
         WrapButtonForUnitTarget(header, btn)
         AttachRankText(btn)
         AttachCastCountText(btn)
+        AttachBuffStatusText(btn)
         if self.masqueGroup then self.masqueGroup:AddButton(btn) end
         barData.individualButtons[i] = btn
     end
@@ -872,6 +901,7 @@ function SUB:SyncSharedSlot(sourceUnit, index, btnType, action)
                             btn:SetAttribute("SUB_macro", nil)
                             if btn.SUB_rankText then btn.SUB_rankText:SetText("") end
                             if btn.SUB_castCountText then btn.SUB_castCountText:SetText("") end
+                            if btn.SUB_buffStatusText then btn.SUB_buffStatusText:SetText("") end
                             self:UpdateDispelHighlight(btn)
                         end
                     else
@@ -969,10 +999,140 @@ function SUB:UpdateAllCastCounts()
     end
 end
 
+-------------------------------------------------------------------------------
+-- Buff Status
+--
+-- Zeigt verbleibende Buff-Dauer in der Button-Ecke wenn der Zauber des Buttons
+-- als Buff auf dem Ziel aktiv ist.  Zeigt "-" wenn der Buff nicht aktiv ist.
+-- Wird über UNIT_AURA-Events plus einen Sekundenticker aktualisiert.
+-------------------------------------------------------------------------------
+
+-- Gibt den Zaubernamen für einen spell-type Button zurück, oder nil.
+local function GetButtonSpellName(btn)
+    if btn._state_type ~= "spell" then return nil end
+    local action = btn._state_action
+    if not action then return nil end
+    local info = CE.Spell.GetSpellInfo(action)
+    return info and info.name
+end
+
+-- Zaubernamen die mindestens einmal als Spieler-Buff entdeckt wurden.
+-- Wird zur Laufzeit befüllt; nur dann zeigen wir "-" wenn der Buff gerade nicht aktiv ist.
+local knownBuffSpells = {}
+
+-- Durchsucht die Buffs einer Einheit nach einem vom Spieler gewirkten Buff
+-- mit dem angegebenen Zaubernamen.  Gibt (expirationTime, duration) zurück, oder nil.
+-- Markiert den Zaubernamen als bekannten Buff-Zauber sobald er gefunden wird.
+local function FindPlayerBuffOnUnit(unit, spellName)
+    if not unit or not CE.Unit.UnitExists(unit) then return nil end
+    for i = 1, 40 do
+        local name, _, _, _, duration, expirationTime, source = CE.Unit.UnitAura(unit, i, "HELPFUL")
+        if not name then break end
+        if name == spellName and source == "player" then
+            knownBuffSpells[spellName] = true
+            return expirationTime, duration
+        end
+    end
+    return nil
+end
+
+local function FormatBuffTime(remaining)
+    if remaining <= 0 then return "0" end
+    if remaining >= 3600 then
+        return math.ceil(remaining / 3600) .. "h"
+    elseif remaining >= 60 then
+        return math.ceil(remaining / 60) .. "m"
+    else
+        return math.ceil(remaining) .. "s"
+    end
+end
+
+function SUB:UpdateButtonBuffStatus(btn)
+    local fs = btn.SUB_buffStatusText
+    if not fs then return end
+    local db = self.db and self.db.profile
+    if not db or not db.showBuffStatus then
+        fs:SetText("")
+        return
+    end
+    local btnType = btn._state_type
+    if not btnType or btnType == "empty" then
+        fs:SetText("")
+        return
+    end
+    local spellName = GetButtonSpellName(btn)
+    if not spellName then
+        fs:SetText("")
+        return
+    end
+    -- Layout
+    local corner   = db.buffStatusCorner or "BOTTOMLEFT"
+    local off      = CORNER_OFFSET[corner] or CORNER_OFFSET.BOTTOMLEFT
+    local flags    = (db.buffStatusOutline and db.buffStatusOutline ~= "NONE") and db.buffStatusOutline or ""
+    local fontPath = LSM:Fetch("font", db.buffStatusFont or "Friz Quadrata TT")
+    fs:ClearAllPoints()
+    fs:SetPoint(corner, btn, corner, off[1] + (db.buffStatusOffsetX or 0), off[2] + (db.buffStatusOffsetY or 0))
+    fs:SetFont(fontPath, db.buffStatusFontSize or 9, flags)
+
+    local expirationTime, duration = FindPlayerBuffOnUnit(btn.SUB_unit, spellName)
+    if expirationTime then
+        btn.SUB_buffExpiry = expirationTime
+        if duration == 0 then
+            local c = db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 }
+            fs:SetTextColor(c.r, c.g, c.b, c.a)
+            fs:SetText("~")
+        else
+            local remaining = math.max(0, expirationTime - GetTime())
+            local threshold = db.buffStatusLowThreshold or 60
+            local c = (remaining < threshold)
+                and (db.buffStatusLowColor or { r = 1, g = 0, b = 0, a = 1 })
+                or  (db.buffStatusColor    or { r = 1, g = 1, b = 0, a = 1 })
+            fs:SetTextColor(c.r, c.g, c.b, c.a)
+            fs:SetText(FormatBuffTime(remaining))
+        end
+    elseif knownBuffSpells[spellName] then
+        -- Bekannter Buff-Zauber, aber gerade nicht auf dieser Einheit aktiv.
+        btn.SUB_buffExpiry = nil
+        local c = db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 }
+        fs:SetTextColor(c.r, c.g, c.b, c.a)
+        fs:SetText("-")
+    else
+        -- Kein Buff-Zauber (oder noch nie als Buff erkannt) → nichts anzeigen.
+        btn.SUB_buffExpiry = nil
+        fs:SetText("")
+    end
+end
+
+function SUB:UpdateAllBuffStatuses()
+    for _, unit in ipairs(UNITS) do
+        local bd = self.bars[unit]
+        if bd then
+            for _, btn in ipairs(bd.sharedButtons) do
+                self:UpdateButtonBuffStatus(btn)
+            end
+            for _, btn in ipairs(bd.individualButtons) do
+                self:UpdateButtonBuffStatus(btn)
+            end
+        end
+    end
+end
+
+function SUB:UpdateBuffStatusesForUnit(unit)
+    local bd = self.bars[unit]
+    if not bd then return end
+    for _, btn in ipairs(bd.sharedButtons) do
+        self:UpdateButtonBuffStatus(btn)
+    end
+    for _, btn in ipairs(bd.individualButtons) do
+        self:UpdateButtonBuffStatus(btn)
+    end
+end
+
 function SUB:ApplyButtonState(btn, btnType, action)
     if not btnType or btnType == "empty" or not action then
         if btn.SUB_rankText then btn.SUB_rankText:SetText("") end
         if btn.SUB_castCountText then btn.SUB_castCountText:SetText("") end
+        if btn.SUB_buffStatusText then btn.SUB_buffStatusText:SetText("") end
         btn:SetAttribute("SUB_macro", nil)
         self:UpdateDispelHighlight(btn) -- clear overlay when slot becomes empty
         return
@@ -994,6 +1154,7 @@ function SUB:ApplyButtonState(btn, btnType, action)
     self:UpdateButtonRankText(btn, btnType, action)
     self:UpdateButtonCastCount(btn, btnType, action)
     self:UpdateDispelHighlight(btn)
+    self:UpdateButtonBuffStatus(btn)
 end
 
 function SUB:RestoreSharedButton(unit, btn, index)
@@ -1009,6 +1170,7 @@ local function ClearIndividualButton(btn)
     btn:SetAttribute("SUB_macro", nil)
     if btn.SUB_rankText then btn.SUB_rankText:SetText("") end
     if btn.SUB_castCountText then btn.SUB_castCountText:SetText("") end
+    if btn.SUB_buffStatusText then btn.SUB_buffStatusText:SetText("") end
 end
 
 function SUB:RefreshIndividualButtons(unit)
