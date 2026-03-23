@@ -310,7 +310,7 @@ function SUB:OnInitialize()
             frame.subOpenOptionsBtn:SetShown(i == 3)
         end,
         [1]           = { title = L["TUTORIAL_TITLE"], text = L["TUTORIAL_P1"], image = "Interface\\AddOns\\SupportUnitButtons\\sub_tutorial_bars", imageW = 300, imageH = 77 },
-        [2]           = { title = L["TUTORIAL_TITLE"], text = L["TUTORIAL_P2"], image = "Interface\\AddOns\\SupportUnitButtons\\sub_tutorial_button", imageW = 300, imageH = 69 },
+        [2]           = { title = L["TUTORIAL_TITLE"], text = L["TUTORIAL_P2"], image = "Interface\\AddOns\\SupportUnitButtons\\sub_tutorial_button", imageW = 300, imageH = 200 },
         [3]           = { title = L["TUTORIAL_TITLE"], text = L["TUTORIAL_P3"] },
     })
 
@@ -1086,7 +1086,7 @@ function SUB:UpdateButtonBuffStatus(btn)
             local threshold = db.buffStatusLowThreshold or 60
             local c = (remaining < threshold)
                 and (db.buffStatusLowColor or { r = 1, g = 0, b = 0, a = 1 })
-                or  (db.buffStatusColor    or { r = 1, g = 1, b = 0, a = 1 })
+                or (db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 })
             fs:SetTextColor(c.r, c.g, c.b, c.a)
             fs:SetText(FormatBuffTime(remaining))
         end
