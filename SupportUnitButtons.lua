@@ -471,9 +471,21 @@ local CORNER_OFFSET = {
     BOTTOMRIGHT = { 3, -1 },
 }
 
+-- Returns (or lazily creates) a child frame used to host button text overlays.
+-- Because it is a child Frame with a higher FrameLevel it always renders above
+-- Masque's HIGHLIGHT-layer hover border on the parent button.
+local function GetOrCreateTextOverlay(btn)
+    if btn.SUB_textOverlay then return btn.SUB_textOverlay end
+    local ov = CreateFrame("Frame", nil, btn)
+    ov:SetAllPoints(btn)
+    ov:SetFrameLevel(btn:GetFrameLevel() + 10)
+    btn.SUB_textOverlay = ov
+    return ov
+end
+
 -- Attach a rank-text FontString to a button (corner set dynamically on update).
 local function AttachRankText(btn)
-    local fs = btn:CreateFontString(nil, "OVERLAY")
+    local fs = GetOrCreateTextOverlay(btn):CreateFontString(nil, "OVERLAY")
     fs:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
     fs:SetText("")
     btn.SUB_rankText = fs
@@ -481,7 +493,7 @@ end
 
 -- Attach a cast-count FontString to a button (corner set dynamically on update).
 local function AttachCastCountText(btn)
-    local fs = btn:CreateFontString(nil, "OVERLAY")
+    local fs = GetOrCreateTextOverlay(btn):CreateFontString(nil, "OVERLAY")
     fs:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
     fs:SetText("")
     btn.SUB_castCountText = fs
@@ -489,7 +501,7 @@ end
 
 -- Attach a buff-status FontString to a button (corner set dynamically on update).
 local function AttachBuffStatusText(btn)
-    local fs = btn:CreateFontString(nil, "OVERLAY")
+    local fs = GetOrCreateTextOverlay(btn):CreateFontString(nil, "OVERLAY")
     fs:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
     fs:SetText("")
     btn.SUB_buffStatusText = fs
