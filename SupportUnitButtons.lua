@@ -41,7 +41,7 @@ local defaults          = SUB_NS.defaults
 SUB.bars                = {}
 SUB.masqueGroup         = nil
 SUB.syncing             = false
-SUB.dispelActiveUnits   = {} -- unit → true when a dispellable debuff is currently active
+SUB.dispelActiveUnits   = {}    -- unit → true when a dispellable debuff is currently active
 SUB.dispelAlertPreview  = false -- runtime-only; simulates debuff state for options preview
 
 -------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ SUB.dispelAlertPreview  = false -- runtime-only; simulates debuff state for opti
 local DISPEL_ID_TYPES   = SUB_NS.DISPEL_ID_TYPES
 
 -- Maps debuff type names to their per-type color key in the DB profile.
-local DEBUFF_COLOR_KEY = {
+local DEBUFF_COLOR_KEY  = {
     Magic   = "dispelAlertColorMagic",
     Curse   = "dispelAlertColorCurse",
     Poison  = "dispelAlertColorPoison",
@@ -79,8 +79,9 @@ end
 
 -- Spell-name → { DebuffType = true }.  Built after spells load so every rank
 -- of a multi-rank Classic spell matches automatically (they share a name).
-local dispelNameTypes   = {}
+local dispelNameTypes = {}
 
+-- Rebuilds the spell-name dispel map from the static spell-ID mapping table.
 local function BuildDispelNameTypes()
     for id, types in pairs(DISPEL_ID_TYPES) do
         local info = CE.Spell.GetSpellInfo(id)
@@ -127,10 +128,10 @@ local function GetOrCreateDispelOverlay(btn)
         t:SetTexture([[Interface\Buttons\WHITE8X8]])
         return t
     end
-    ov.eT = makeStrip()  -- top edge
-    ov.eB = makeStrip()  -- bottom edge
-    ov.eL = makeStrip()  -- left edge
-    ov.eR = makeStrip()  -- right edge
+    ov.eT = makeStrip() -- top edge
+    ov.eB = makeStrip() -- bottom edge
+    ov.eL = makeStrip() -- left edge
+    ov.eR = makeStrip() -- right edge
 
     -- Circle mode: single pre-rendered ring texture (white ring on transparent
     -- background) coloured at runtime via SetVertexColor.  Gives a true circle
@@ -146,13 +147,13 @@ local function GetOrCreateDispelOverlay(btn)
     -- visible transparent rectangle over the button icon.
     ov._t = 0
     ov:SetScript("OnUpdate", function(self, elapsed)
-        self._t = self._t + elapsed
+        self._t        = self._t + elapsed
         local speed    = SUB.db and SUB.db.profile.dispelAlertPulseSpeed or 2.5
-        local alphaMin = SUB.db and SUB.db.profile.dispelAlertAlphaMin  or 0.0
-        local alphaMax = SUB.db and SUB.db.profile.dispelAlertAlphaMax  or 1.0
+        local alphaMin = SUB.db and SUB.db.profile.dispelAlertAlphaMin or 0.0
+        local alphaMax = SUB.db and SUB.db.profile.dispelAlertAlphaMax or 1.0
         -- Smooth cosine oscillation: phase goes 0 → 1 → 0 with no dead-time.
-        local phase = (1 - math.cos(self._t * math.pi * speed)) / 2
-        local a = alphaMin + (alphaMax - alphaMin) * phase
+        local phase    = (1 - math.cos(self._t * math.pi * speed)) / 2
+        local a        = alphaMin + (alphaMax - alphaMin) * phase
         self.eT:SetAlpha(a)
         self.eB:SetAlpha(a)
         self.eL:SetAlpha(a)
@@ -164,104 +165,144 @@ local function GetOrCreateDispelOverlay(btn)
     return ov
 end
 
+-- Hides the dispel overlay on a button when no alert should be shown.
+local function HideDispelOverlay(btn)
+    if btn.SUB_dispelOverlay then
+        btn.SUB_dispelOverlay:Hide()
+    end
+end
+
+-- Returns any dispel type from the map for options-preview rendering.
+local function GetPreviewDispelType(types)
+    for t in pairs(types) do
+        return t
+    end
+    return nil
+end
+
+-- Scans harmful auras on unit and returns the first dispellable debuff type.
+local function GetUnitDispelType(unit, types)
+    if not unit or not CE.Unit.UnitExists(unit) then
+        return nil
+    end
+    for i = 1, 40 do
+        local name, _, _, debuffType = CE.Unit.UnitAura(unit, i, "HARMFUL")
+        if not name then break end
+        if debuffType and types[debuffType] then
+            return debuffType
+        end
+    end
+    return nil
+end
+
+-- Anchors and layers the dispel overlay relative to the button with padding.
+local function PositionDispelOverlay(btn, ov, pad)
+    local baseLevel = btn:GetFrameLevel()
+    if btn.SUB_textOverlay then
+        btn.SUB_textOverlay:SetFrameLevel(baseLevel + 10)
+    end
+    ov:SetFrameLevel(baseLevel + 7)
+    ov:ClearAllPoints()
+    ov:SetPoint("TOPLEFT", btn, "TOPLEFT", -pad, pad)
+    ov:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", pad, -pad)
+end
+
+-- Renders the circular alert style by showing only the ring texture.
+local function ShowCircleOverlay(ov, col)
+    ov.eT:Hide()
+    ov.eB:Hide()
+    ov.eL:Hide()
+    ov.eR:Hide()
+    ov.eRing:SetVertexColor(col.r, col.g, col.b, 1)
+    ov.eRing:Show()
+end
+
+-- Renders the square alert style by sizing and showing the four edge strips.
+local function ShowSquareOverlay(ov, bw)
+    ov.eRing:Hide()
+
+    ov.eT:ClearAllPoints()
+    ov.eT:SetPoint("TOPLEFT", ov, "TOPLEFT", 0, 0)
+    ov.eT:SetPoint("TOPRIGHT", ov, "TOPRIGHT", 0, 0)
+    ov.eT:SetHeight(bw)
+    ov.eT:Show()
+
+    ov.eB:ClearAllPoints()
+    ov.eB:SetPoint("BOTTOMLEFT", ov, "BOTTOMLEFT", 0, 0)
+    ov.eB:SetPoint("BOTTOMRIGHT", ov, "BOTTOMRIGHT", 0, 0)
+    ov.eB:SetHeight(bw)
+    ov.eB:Show()
+
+    ov.eL:ClearAllPoints()
+    ov.eL:SetPoint("TOPLEFT", ov, "TOPLEFT", 0, -bw)
+    ov.eL:SetPoint("BOTTOMLEFT", ov, "BOTTOMLEFT", 0, bw)
+    ov.eL:SetWidth(bw)
+    ov.eL:Show()
+
+    ov.eR:ClearAllPoints()
+    ov.eR:SetPoint("TOPRIGHT", ov, "TOPRIGHT", 0, -bw)
+    ov.eR:SetPoint("BOTTOMRIGHT", ov, "BOTTOMRIGHT", 0, bw)
+    ov.eR:SetWidth(bw)
+    ov.eR:Show()
+end
+
+-- Applies visual config (padding, color, shape, border width) and shows overlay.
+local function ConfigureDispelOverlay(sub, btn, ov, foundType)
+    -- dispelAlertPadding: positive = extends outside the button edge,
+    -- negative = inset inside the button.
+    local db = sub.db.profile
+    local pad = db.dispelAlertPadding
+    if pad == nil then pad = 3 end
+    PositionDispelOverlay(btn, ov, pad)
+
+    local col = GetDispelColor(db, foundType)
+    local shape = db.dispelAlertShape or "square"
+    local bwCfg = db.dispelAlertBorderWidth or 0
+    local bw = bwCfg > 0 and bwCfg or math.max(2, math.floor(btn:GetWidth() * 0.06))
+
+    -- Colour the square-mode strips up front; circle ring is coloured in its branch.
+    for _, s in ipairs({ ov.eT, ov.eB, ov.eL, ov.eR }) do
+        s:SetVertexColor(col.r, col.g, col.b, 1)
+    end
+
+    if shape == "circle" then
+        ShowCircleOverlay(ov, col)
+    else
+        ShowSquareOverlay(ov, bw)
+    end
+
+    ov:Show()
+end
+
+-- Resolves the matching dispel type for this button in preview or live mode.
+local function ResolveButtonDispelType(sub, btn, types)
+    if sub.dispelAlertPreview then
+        return GetPreviewDispelType(types)
+    end
+    return GetUnitDispelType(btn.SUB_unit, types)
+end
+
 -- Show or hide the dispel-alert overlay for a single button.
 function SUB:UpdateDispelHighlight(btn)
     if not self.db.profile.dispelAlert then
-        if btn.SUB_dispelOverlay then btn.SUB_dispelOverlay:Hide() end
+        HideDispelOverlay(btn)
         return
     end
+
     local types = GetButtonDispelTypes(btn)
     if not types then
-        if btn.SUB_dispelOverlay then btn.SUB_dispelOverlay:Hide() end
+        HideDispelOverlay(btn)
         return
     end
-    -- Determine the debuff type that triggers the alert.
-    -- In preview mode the unit-aura check is skipped so the appearance can be
-    -- adjusted in the options panel outside of combat.
-    local foundType
-    if self.dispelAlertPreview then
-        for t in pairs(types) do foundType = t; break end
-    else
-        local unit = btn.SUB_unit
-        if not unit or not CE.Unit.UnitExists(unit) then
-            if btn.SUB_dispelOverlay then btn.SUB_dispelOverlay:Hide() end
-            return
-        end
-        for i = 1, 40 do
-            local name, _, _, debuffType = CE.Unit.UnitAura(unit, i, "HARMFUL")
-            if not name then break end
-            if debuffType and types[debuffType] then
-                foundType = debuffType
-                break
-            end
-        end
+
+    local foundType = ResolveButtonDispelType(self, btn, types)
+    if not foundType then
+        HideDispelOverlay(btn)
+        return
     end
+
     local ov = GetOrCreateDispelOverlay(btn)
-    if foundType then
-        -- Position the overlay frame around (or inside) the button.
-        -- dispelAlertPadding: positive = extends outside the button edge,
-        -- negative = inset inside the button.
-        local pad = self.db.profile.dispelAlertPadding
-        if pad == nil then pad = 3 end
-        -- Both overlay levels are derived from the CURRENT button frame level so
-        -- they stay correct even if Masque changes the button's level after the
-        -- text overlay was first created.
-        local baseLevel = btn:GetFrameLevel()
-        if btn.SUB_textOverlay then
-            btn.SUB_textOverlay:SetFrameLevel(baseLevel + 10)
-        end
-        ov:SetFrameLevel(baseLevel + 7)
-        ov:ClearAllPoints()
-        ov:SetPoint("TOPLEFT",     btn, "TOPLEFT",     -pad,  pad)
-        ov:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT",  pad, -pad)
-
-        local col   = GetDispelColor(self.db.profile, foundType)
-        local shape = self.db.profile.dispelAlertShape or "square"
-
-        local bwCfg = self.db.profile.dispelAlertBorderWidth or 0
-        local BW    = bwCfg > 0 and bwCfg
-                      or math.max(2, math.floor(btn:GetWidth() * 0.06))
-
-        -- Colour the square-mode strips up front; circle ring is coloured in its branch.
-        for _, s in ipairs({ ov.eT, ov.eB, ov.eL, ov.eR }) do
-            s:SetVertexColor(col.r, col.g, col.b, 1)
-        end
-
-        if shape == "circle" then
-            -- Circle mode: pre-rendered ring texture scaled to the overlay size.
-            -- Gives a smooth, true circle — no segment approximation needed.
-            ov.eT:Hide(); ov.eB:Hide(); ov.eL:Hide(); ov.eR:Hide()
-            ov.eRing:SetVertexColor(col.r, col.g, col.b, 1)
-            ov.eRing:Show()
-        else
-            -- Square mode: full-width strips; ring texture hidden.
-            ov.eRing:Hide()
-
-            ov.eT:ClearAllPoints()
-            ov.eT:SetPoint("TOPLEFT",  ov, "TOPLEFT",  0, 0)
-            ov.eT:SetPoint("TOPRIGHT", ov, "TOPRIGHT", 0, 0)
-            ov.eT:SetHeight(BW); ov.eT:Show()
-
-            ov.eB:ClearAllPoints()
-            ov.eB:SetPoint("BOTTOMLEFT",  ov, "BOTTOMLEFT",  0, 0)
-            ov.eB:SetPoint("BOTTOMRIGHT", ov, "BOTTOMRIGHT", 0, 0)
-            ov.eB:SetHeight(BW); ov.eB:Show()
-
-            ov.eL:ClearAllPoints()
-            ov.eL:SetPoint("TOPLEFT",    ov, "TOPLEFT",    0, -BW)
-            ov.eL:SetPoint("BOTTOMLEFT", ov, "BOTTOMLEFT", 0,  BW)
-            ov.eL:SetWidth(BW); ov.eL:Show()
-
-            ov.eR:ClearAllPoints()
-            ov.eR:SetPoint("TOPRIGHT",    ov, "TOPRIGHT",    0, -BW)
-            ov.eR:SetPoint("BOTTOMRIGHT", ov, "BOTTOMRIGHT", 0,  BW)
-            ov.eR:SetWidth(BW); ov.eR:Show()
-        end
-
-        ov:Show()
-    else
-        ov:Hide()
-    end
+    ConfigureDispelOverlay(self, btn, ov, foundType)
 end
 
 -- Update all buttons on one bar.
@@ -400,6 +441,7 @@ function SUB:OnInitialize()
     end
 end
 
+-- Registers runtime events and performs initial bar setup after login.
 function SUB:OnEnable()
     self:RegisterEvent("GROUP_ROSTER_UPDATE", "OnRosterUpdate")
     self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnRosterUpdate")
@@ -444,10 +486,12 @@ function SUB:OnEnable()
     end)
 end
 
+-- Opens the addon options panel from chat commands.
 function SUB:ChatCommand()
     AceCfgD:Open("SupportUnitButtons")
 end
 
+-- Restarts and shows the tutorial from page one.
 function SUB:ShowTutorial()
     self:ResetTutorials()
     self:TriggerTutorial(5)
@@ -531,14 +575,14 @@ local function WrapButtonForUnitTarget(header, btn)
 end
 
 local CORNER_OFFSET = {
-    TOPLEFT     = { -3,  1 },
-    TOPRIGHT    = {  3,  1 },
+    TOPLEFT     = { -3, 1 },
+    TOPRIGHT    = { 3, 1 },
     BOTTOMLEFT  = { -3, -1 },
-    BOTTOMRIGHT = {  3, -1 },
-    TOP         = {  0,  1 },
-    BOTTOM      = {  0, -1 },
-    LEFT        = { -3,  0 },
-    RIGHT       = {  3,  0 },
+    BOTTOMRIGHT = { 3, -1 },
+    TOP         = { 0, 1 },
+    BOTTOM      = { 0, -1 },
+    LEFT        = { -3, 0 },
+    RIGHT       = { 3, 0 },
 }
 
 -- Returns (or lazily creates) a child frame used to host button text overlays.
@@ -579,38 +623,53 @@ end
 
 -- Returns how many times the player can cast the spell before going OOM,
 -- or the total item count in bags.  Returns nil when not applicable.
-local function GetCastCountValue(btnType, action)
-    if btnType == "spell" then
-        local id = tonumber(action)
-        if not id then return nil end
-        -- GetSpellPowerCost returns a list of power-cost entries; entry.type == 0 is mana.
-        local costTable = CE.Spell.GetSpellPowerCost and CE.Spell.GetSpellPowerCost(id)
-        if not costTable then return nil end
-        local manaCost
-        for _, entry in ipairs(costTable) do
-            if entry.type == 0 then
-                manaCost = entry.cost
-                break
-            end
+-- Returns mana cost for a spell ID, reading only mana-type power entries.
+local function GetSpellManaCost(spellId)
+    local getCost = CE.Spell.GetSpellPowerCost
+    if not getCost then return nil end
+    local costTable = getCost(spellId)
+    if not costTable then return nil end
+    for _, entry in ipairs(costTable) do
+        if entry.type == 0 then
+            return entry.cost
         end
-        if not manaCost or manaCost <= 0 then return nil end
-        local currentMana = UnitPower("player", 0) or UnitMana("player") or 0
-        return math.floor(currentMana / manaCost)
-    elseif btnType == "item" then
-        local id = action and tonumber(action:match("item:(%d+)"))
-        if not id then return nil end
-        return GetItemCount and GetItemCount(id) or nil
     end
     return nil
 end
 
+-- Returns how often the spell can be cast with current mana, or nil.
+local function GetSpellCastCount(action)
+    local id = tonumber(action)
+    if not id then return nil end
+    local manaCost = GetSpellManaCost(id)
+    if not manaCost or manaCost <= 0 then return nil end
+    local currentMana = UnitPower("player", 0) or UnitMana("player") or 0
+    return math.floor(currentMana / manaCost)
+end
 
+-- Returns the item amount in bags for an item-action string, or nil.
+local function GetItemCastCount(action)
+    local id = action and tonumber(action:match("item:(%d+)"))
+    if not id or not GetItemCount then return nil end
+    return GetItemCount(id)
+end
+
+-- Dispatches cast-count lookup by action type (spell or item).
+local function GetCastCountValue(btnType, action)
+    if btnType == "spell" then return GetSpellCastCount(action) end
+    if btnType == "item" then return GetItemCastCount(action) end
+    return nil
+end
+
+
+-- Creates bars for all managed units.
 function SUB:CreateAllBars()
     for _, unit in ipairs(UNITS) do
         self:CreateBar(unit)
     end
 end
 
+-- Creates one complete unit bar including secure header and all buttons.
 function SUB:CreateBar(unit)
     local db    = self.db.profile
     local uIdx  = UNIT_INDEX[unit]
@@ -750,20 +809,32 @@ end
 
 -- Build a unit-targeted macro string for a spell or item action.
 -- Returns nil when the spell/item info is not yet available in the client cache.
+local function BuildSpellMacroText(unit, action)
+    local info = CE.Spell.GetSpellInfo(action)
+    if not info or not info.name then return nil end
+    return "/cast [@" .. unit .. "] " .. info.name
+end
+
+-- Builds a unit-targeted /use macro for an item action string (item:ID).
+local function BuildItemMacroText(unit, action)
+    local id = action and tonumber(action:match("item:(%d+)"))
+    if not id then return nil end
+    local name = CE.Item.GetItemInfo(id)
+    if not name then return nil end
+    return "/use [@" .. unit .. "] " .. name
+end
+
+-- Dispatch table for type-specific macro builders.
+local MACRO_BUILDERS = {
+    spell = BuildSpellMacroText,
+    item = BuildItemMacroText,
+}
+
+-- Builds unit-targeted macro text for supported action types.
 local function BuildMacroText(unit, btnType, action)
-    if btnType == "spell" then
-        local info = CE.Spell.GetSpellInfo(action)
-        if not info or not info.name then return nil end
-        return "/cast [@" .. unit .. "] " .. info.name
-    elseif btnType == "item" then
-        -- action is stored as "item:12345"
-        local id = action and tonumber(action:match("item:(%d+)"))
-        if not id then return nil end
-        local name = CE.Item.GetItemInfo(id)
-        if not name then return nil end
-        return "/use [@" .. unit .. "] " .. name
-    end
-    return nil
+    local builder = MACRO_BUILDERS[btnType]
+    if not builder then return nil end
+    return builder(unit, action)
 end
 
 -------------------------------------------------------------------------------
@@ -785,6 +856,7 @@ function SUB:GetBarTotalWidth()
     return math.max(w, sz)
 end
 
+-- Repositions and resizes all buttons on one unit bar.
 function SUB:UpdateBarLayout(unit)
     local db      = self.db.profile
     local barData = self.bars[unit]
@@ -826,6 +898,7 @@ function SUB:UpdateBarLayout(unit)
     self:UpdateLabelVisibility(unit)
 end
 
+-- Re-applies layout sizing/positions to all bars.
 function SUB:UpdateAllLayouts()
     for _, unit in ipairs(UNITS) do
         self:UpdateBarLayout(unit)
@@ -852,12 +925,14 @@ function SUB:UpdateLabelVisibility(unit)
     end
 end
 
+-- Refreshes label visibility and text for every bar.
 function SUB:UpdateAllLabelVisibility()
     for _, unit in ipairs(UNITS) do
         self:UpdateLabelVisibility(unit)
     end
 end
 
+-- Applies the show-empty-slots grid setting to all buttons.
 function SUB:ApplyShowEmptyButtonsOption()
     if CE.Combat.InCombatLockdown() then
         self.emptyButtonsDirty = true
@@ -882,6 +957,7 @@ function SUB:ApplyShowEmptyButtonsOption()
     end
 end
 
+-- Persists and applies the show-empty-slots option.
 function SUB:SetShowEmptyButtons(show)
     self.db.profile.showEmptyButtons = show and true or false
     self:ApplyShowEmptyButtonsOption()
@@ -906,6 +982,7 @@ function SUB:SetDragModifier(mod)
     end
 end
 
+-- Returns whether the configured drag-off modifier key is currently held.
 function SUB:IsDragModifierHeld()
     local mod = self.db.profile.dragOffModifier
     if mod == "ANY" then return CE.Input.IsShiftKeyDown() or CE.Input.IsControlKeyDown() or CE.Input.IsAltKeyDown() end
@@ -923,6 +1000,54 @@ function SUB:RestoreButtonSilent(btn, btnType, action)
     ClearCursor()
 end
 
+-- Returns true when the drop operation would clear the button.
+local function IsEmptyButtonState(btnType, action)
+    return not btnType or btnType == "empty" or not action
+end
+
+-- Returns true when a slot currently stores a non-empty action.
+local function SlotHasAssignedAction(slot)
+    return slot and slot.btnType and slot.btnType ~= "empty"
+end
+
+-- Restores previous content if drag-off is blocked by modifier settings.
+local function RestoreIfDragOffBlocked(sub, btn, isEmpty, slot)
+    if isEmpty and SlotHasAssignedAction(slot) and not sub:IsDragModifierHeld() then
+        sub:RestoreButtonSilent(btn, slot.btnType, slot.action)
+        return true
+    end
+    return false
+end
+
+-- Applies shared-slot storage update and synchronizes the slot to all units.
+local function HandleSharedButtonChange(sub, btn, unit, index, btnType, action, isEmpty)
+    local slot = sub.db.char.sharedSlots[index] or {}
+    if RestoreIfDragOffBlocked(sub, btn, isEmpty, slot) then return end
+
+    slot.btnType = btnType
+    slot.action = action
+    sub.db.char.sharedSlots[index] = slot
+    sub:ApplyButtonState(btn, btnType, action)
+    sub:SyncSharedSlot(unit, index, btnType, action)
+end
+
+-- Applies per-character slot updates for individual buttons.
+local function HandleIndividualButtonChange(sub, btn, unit, index, btnType, action, isEmpty)
+    local charName = CE.Unit.UnitName(unit)
+    if charName and charName ~= "Unknown" then
+        local slots = sub.db.char.memberSlots[charName]
+        local slot = slots[index] or {}
+        if RestoreIfDragOffBlocked(sub, btn, isEmpty, slot) then return end
+
+        slot.btnType = btnType
+        slot.action = action
+        slots[index] = slot
+    end
+
+    sub:ApplyButtonState(btn, btnType, action)
+end
+
+-- Handles LAB content-change callbacks and stores shared/individual slot state.
 function SUB:OnButtonContentsChanged(event, btn, state, btnType, action)
     if self.syncing then return end
     local unit    = btn.SUB_unit
@@ -931,52 +1056,30 @@ function SUB:OnButtonContentsChanged(event, btn, state, btnType, action)
     if not unit or not section or not index then return end
     if tostring(state) ~= "0" then return end
 
-    local isEmpty = not btnType or btnType == "empty" or not action
+    local isEmpty = IsEmptyButtonState(btnType, action)
 
     if section == "shared" then
-        local slot = self.db.char.sharedSlots[index] or {}
-        -- Block drag-off without the required modifier; silently restore the old content.
-        if isEmpty and slot.btnType and slot.btnType ~= "empty" then
-            if not self:IsDragModifierHeld() then
-                self:RestoreButtonSilent(btn, slot.btnType, slot.action)
-                return
-            end
-        end
-        slot.btnType                    = btnType
-        slot.action                     = action
-        self.db.char.sharedSlots[index] = slot
-        self:ApplyButtonState(btn, btnType, action)
-        self:SyncSharedSlot(unit, index, btnType, action)
-    elseif section == "individual" then
-        local charName = CE.Unit.UnitName(unit)
-        if charName and charName ~= "Unknown" then
-            local slots = self.db.char.memberSlots[charName]
-            local slot  = slots[index] or {}
-            -- Block drag-off without the required modifier.
-            if isEmpty and slot.btnType and slot.btnType ~= "empty" then
-                if not self:IsDragModifierHeld() then
-                    self:RestoreButtonSilent(btn, slot.btnType, slot.action)
-                    return
-                end
-            end
-            slot.btnType = btnType
-            slot.action  = action
-            slots[index] = slot
-        end
-        self:ApplyButtonState(btn, btnType, action)
+        HandleSharedButtonChange(self, btn, unit, index, btnType, action, isEmpty)
+        return
+    end
+
+    if section == "individual" then
+        HandleIndividualButtonChange(self, btn, unit, index, btnType, action, isEmpty)
     end
 end
 
+-- Clears one shared button to an empty state.
 function SUB:ClearSharedButton(btn)
     if CE.Combat.InCombatLockdown() then return end
     btn:SetState(nil, "empty", nil)
     btn:SetAttribute("SUB_macro", nil)
-    for _, field in ipairs({"SUB_rankText", "SUB_castCountText", "SUB_buffStatusText"}) do
+    for _, field in ipairs({ "SUB_rankText", "SUB_castCountText", "SUB_buffStatusText" }) do
         if btn[field] then btn[field]:SetText("") end
     end
     self:UpdateDispelHighlight(btn)
 end
 
+-- Applies a shared-slot sync update to one target button.
 function SUB:SyncSharedSlotButton(btn, isEmpty, btnType, action)
     if isEmpty then
         self:ClearSharedButton(btn)
@@ -985,6 +1088,7 @@ function SUB:SyncSharedSlotButton(btn, isEmpty, btnType, action)
     end
 end
 
+-- Propagates shared slot changes from one unit to all other unit bars.
 function SUB:SyncSharedSlot(sourceUnit, index, btnType, action)
     if self.syncing then return end
     self.syncing = true
@@ -999,6 +1103,7 @@ function SUB:SyncSharedSlot(sourceUnit, index, btnType, action)
     self.syncing = false
 end
 
+-- Updates spell-rank text for one button according to current options.
 function SUB:UpdateButtonRankText(btn, btnType, action)
     local fs = btn.SUB_rankText
     if not fs then return end
@@ -1025,6 +1130,7 @@ function SUB:UpdateButtonRankText(btn, btnType, action)
     fs:SetText(num)
 end
 
+-- Refreshes rank text for every visible/assigned button.
 function SUB:UpdateAllRankTexts()
     for _, unit in ipairs(UNITS) do
         local bd = self.bars[unit]
@@ -1041,6 +1147,7 @@ function SUB:UpdateAllRankTexts()
     end
 end
 
+-- Updates cast-count text (spell casts or item amount) for one button.
 function SUB:UpdateButtonCastCount(btn, btnType, action)
     local fs = btn.SUB_castCountText
     if not fs then return end
@@ -1068,6 +1175,7 @@ function SUB:UpdateButtonCastCount(btn, btnType, action)
     fs:SetText(tostring(count))
 end
 
+-- Refreshes cast-count labels on all bars.
 function SUB:UpdateAllCastCounts()
     for _, unit in ipairs(UNITS) do
         local bd = self.bars[unit]
@@ -1121,17 +1229,92 @@ local function FindPlayerBuffOnUnit(unit, spellName)
     return nil
 end
 
-local function FormatBuffTime(remaining)
-    if remaining <= 0 then return "0" end
-    if remaining >= 3600 then
-        return math.ceil(remaining / 3600) .. "h"
-    elseif remaining >= 60 then
-        return math.ceil(remaining / 60) .. "m"
-    else
-        return math.ceil(remaining) .. "s"
+local BUFF_TIME_FORMATS = {
+    { min = 3600, div = 3600, suffix = "h" },
+    { min = 60,   div = 60,   suffix = "m" },
+    { min = 0,    div = 1,    suffix = "s" },
+}
+
+-- Formats a positive remaining buff duration into h/m/s units.
+local function FormatPositiveBuffTime(remaining)
+    for _, fmt in ipairs(BUFF_TIME_FORMATS) do
+        if remaining >= fmt.min then
+            return math.ceil(remaining / fmt.div) .. fmt.suffix
+        end
     end
+    return "0"
 end
 
+-- Formats any remaining duration while guarding non-positive values.
+local function FormatBuffTime(remaining)
+    if remaining <= 0 then return "0" end
+    return FormatPositiveBuffTime(remaining)
+end
+
+-- Applies corner, offsets and font settings for the buff-status text.
+local function ConfigureBuffStatusTextLayout(fs, btn, db)
+    local corner   = db.buffStatusCorner or "BOTTOMLEFT"
+    local off      = CORNER_OFFSET[corner] or CORNER_OFFSET.BOTTOMLEFT
+    local flags    = (db.buffStatusOutline and db.buffStatusOutline ~= "NONE") and db.buffStatusOutline or ""
+    local fontPath = LSM:Fetch("font", db.buffStatusFont or "Friz Quadrata TT")
+    fs:ClearAllPoints()
+    fs:SetPoint(corner, btn, corner, off[1] + (db.buffStatusOffsetX or 0), off[2] + (db.buffStatusOffsetY or 0))
+    fs:SetFont(fontPath, db.buffStatusFontSize or 9, flags)
+end
+
+-- Applies color and text in one place for buff-status output.
+local function SetBuffStatusDisplay(fs, color, text)
+    fs:SetTextColor(color.r, color.g, color.b, color.a)
+    fs:SetText(text)
+end
+
+-- Displays active buff state: '~' for timeless buffs or remaining duration.
+local function ShowActiveBuffStatus(btn, fs, db, expirationTime, duration)
+    btn.SUB_buffExpiry = expirationTime
+    if duration == 0 then
+        local c = db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 }
+        SetBuffStatusDisplay(fs, c, "~")
+        return
+    end
+
+    local remaining = math.max(0, expirationTime - GetTime())
+    local threshold = db.buffStatusLowThreshold or 60
+    local c = (remaining < threshold)
+        and (db.buffStatusLowColor or { r = 1, g = 0, b = 0, a = 1 })
+        or (db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 })
+    SetBuffStatusDisplay(fs, c, FormatBuffTime(remaining))
+end
+
+-- Displays '-' when this spell is known as a buff but currently inactive.
+local function ShowInactiveKnownBuffStatus(btn, fs, db)
+    -- Known buff spell, but currently not active on this unit.
+    btn.SUB_buffExpiry = nil
+    local c = db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 }
+    SetBuffStatusDisplay(fs, c, "-")
+end
+
+-- Clears text when the spell is not known as a buff spell.
+local function ShowUnknownBuffStatus(btn, fs)
+    -- Not a buff spell (or never seen as a buff) -> show nothing.
+    btn.SUB_buffExpiry = nil
+    fs:SetText("")
+end
+
+-- Chooses which buff-status presentation to show for the current spell.
+local function UpdateBuffStatusDisplayForSpell(btn, fs, db, spellName)
+    local expirationTime, duration = FindPlayerBuffOnUnit(btn.SUB_unit, spellName)
+    if expirationTime then
+        ShowActiveBuffStatus(btn, fs, db, expirationTime, duration)
+        return
+    end
+    if knownBuffSpells[spellName] then
+        ShowInactiveKnownBuffStatus(btn, fs, db)
+        return
+    end
+    ShowUnknownBuffStatus(btn, fs)
+end
+
+-- Updates one button's buff-status indicator text and color.
 function SUB:UpdateButtonBuffStatus(btn)
     local fs = btn.SUB_buffStatusText
     if not fs then return end
@@ -1150,44 +1333,11 @@ function SUB:UpdateButtonBuffStatus(btn)
         fs:SetText("")
         return
     end
-    -- Layout
-    local corner   = db.buffStatusCorner or "BOTTOMLEFT"
-    local off      = CORNER_OFFSET[corner] or CORNER_OFFSET.BOTTOMLEFT
-    local flags    = (db.buffStatusOutline and db.buffStatusOutline ~= "NONE") and db.buffStatusOutline or ""
-    local fontPath = LSM:Fetch("font", db.buffStatusFont or "Friz Quadrata TT")
-    fs:ClearAllPoints()
-    fs:SetPoint(corner, btn, corner, off[1] + (db.buffStatusOffsetX or 0), off[2] + (db.buffStatusOffsetY or 0))
-    fs:SetFont(fontPath, db.buffStatusFontSize or 9, flags)
-
-    local expirationTime, duration = FindPlayerBuffOnUnit(btn.SUB_unit, spellName)
-    if expirationTime then
-        btn.SUB_buffExpiry = expirationTime
-        if duration == 0 then
-            local c = db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 }
-            fs:SetTextColor(c.r, c.g, c.b, c.a)
-            fs:SetText("~")
-        else
-            local remaining = math.max(0, expirationTime - GetTime())
-            local threshold = db.buffStatusLowThreshold or 60
-            local c = (remaining < threshold)
-                and (db.buffStatusLowColor or { r = 1, g = 0, b = 0, a = 1 })
-                or (db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 })
-            fs:SetTextColor(c.r, c.g, c.b, c.a)
-            fs:SetText(FormatBuffTime(remaining))
-        end
-    elseif knownBuffSpells[spellName] then
-        -- Known buff spell, but currently not active on this unit.
-        btn.SUB_buffExpiry = nil
-        local c = db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 }
-        fs:SetTextColor(c.r, c.g, c.b, c.a)
-        fs:SetText("-")
-    else
-        -- Not a buff spell (or never seen as a buff) → show nothing.
-        btn.SUB_buffExpiry = nil
-        fs:SetText("")
-    end
+    ConfigureBuffStatusTextLayout(fs, btn, db)
+    UpdateBuffStatusDisplayForSpell(btn, fs, db, spellName)
 end
 
+-- Refreshes buff-status indicators for all unit bars.
 function SUB:UpdateAllBuffStatuses()
     for _, unit in ipairs(UNITS) do
         local bd = self.bars[unit]
@@ -1202,6 +1352,7 @@ function SUB:UpdateAllBuffStatuses()
     end
 end
 
+-- Refreshes buff-status indicators for one unit bar.
 function SUB:UpdateBuffStatusesForUnit(unit)
     local bd = self.bars[unit]
     if not bd then return end
@@ -1213,6 +1364,7 @@ function SUB:UpdateBuffStatusesForUnit(unit)
     end
 end
 
+-- Applies a button action state and updates all visual overlays/texts.
 function SUB:ApplyButtonState(btn, btnType, action)
     if not btnType or btnType == "empty" or not action then
         if btn.SUB_rankText then btn.SUB_rankText:SetText("") end
@@ -1242,6 +1394,7 @@ function SUB:ApplyButtonState(btn, btnType, action)
     self:UpdateButtonBuffStatus(btn)
 end
 
+-- Restores one shared button from saved profile data.
 function SUB:RestoreSharedButton(unit, btn, index)
     local slot = self.db.char.sharedSlots[index]
     if slot and slot.btnType then
@@ -1249,6 +1402,7 @@ function SUB:RestoreSharedButton(unit, btn, index)
     end
 end
 
+-- Clears one individual button to an empty state.
 local function ClearIndividualButton(btn)
     if CE.Combat.InCombatLockdown() then return end
     btn:SetState(nil, "empty", nil)
@@ -1258,6 +1412,7 @@ local function ClearIndividualButton(btn)
     if btn.SUB_buffStatusText then btn.SUB_buffStatusText:SetText("") end
 end
 
+-- Rebuilds individual buttons for one unit from per-character slot data.
 function SUB:RefreshIndividualButtons(unit)
     local barData = self.bars[unit]
     if not barData then return end
@@ -1311,6 +1466,7 @@ function SUB:ShouldShowPlayerBar()
     return true
 end
 
+-- Applies deferred updates after leaving combat lockdown.
 function SUB:OnCombatEnd()
     if self.rosterDirty then
         self.rosterDirty = false
@@ -1332,6 +1488,23 @@ function SUB:OnUnitNameUpdate(_, unit)
     self:RefreshIndividualButtons(unit)
 end
 
+-- Returns whether the bar for `unit` should currently be visible.
+local function ShouldShowBarForUnit(sub, unit)
+    if unit == "player" then
+        return sub:ShouldShowPlayerBar()
+    end
+    return CE.Unit.UnitExists(unit) and true or false
+end
+
+-- Runs follow-up updates for bars that are currently visible.
+local function RefreshVisibleBarState(sub, unit)
+    sub:UpdateLabelVisibility(unit)
+    if unit ~= "player" then
+        sub:RefreshIndividualButtons(unit)
+    end
+end
+
+-- Updates bar visibility and dependent state for current group roster.
 function SUB:OnRosterUpdate()
     -- Protected frames (those with secure children) cannot have SetShown called
     -- during combat lockdown. Defer the visibility update until combat ends.
@@ -1344,20 +1517,12 @@ function SUB:OnRosterUpdate()
         local barData = self.bars[unit]
         if not barData then break end
 
-        local show
-        if unit == "player" then
-            show = self:ShouldShowPlayerBar()
-        else
-            show = CE.Unit.UnitExists(unit) and true or false
-        end
+        local show = ShouldShowBarForUnit(self, unit)
 
         barData.frame:SetShown(show)
 
         if show then
-            self:UpdateLabelVisibility(unit)
-            if unit ~= "player" then
-                self:RefreshIndividualButtons(unit)
-            end
+            RefreshVisibleBarState(self, unit)
         end
     end
 
@@ -1410,6 +1575,7 @@ function SUB:ApplyAnchoredPositions()
     end
 end
 
+-- Restores one bar position from saved coordinates or default stack.
 function SUB:RestoreBarPosition(unit)
     local db      = self.db.profile
     local barData = self.bars[unit]
@@ -1433,6 +1599,7 @@ function SUB:RestoreBarPosition(unit)
     end
 end
 
+-- Resets all saved bar positions and reapplies active positioning mode.
 function SUB:ResetAllPositions()
     local db = self.db.profile
     for _, unit in ipairs(UNITS) do
