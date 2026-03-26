@@ -42,6 +42,7 @@ SUB.bars                = {}
 SUB.masqueGroup         = nil
 SUB.syncing             = false
 SUB.dispelActiveUnits   = {} -- unit → true when a dispellable debuff is currently active
+SUB.dispelAlertPreview  = false -- runtime-only; simulates debuff state for options preview
 
 -------------------------------------------------------------------------------
 -- Dispel Alert
@@ -57,6 +58,24 @@ SUB.dispelActiveUnits   = {} -- unit → true when a dispellable debuff is curre
 -------------------------------------------------------------------------------
 
 local DISPEL_ID_TYPES   = SUB_NS.DISPEL_ID_TYPES
+
+-- Maps debuff type names to their per-type color key in the DB profile.
+local DEBUFF_COLOR_KEY = {
+    Magic   = "dispelAlertColorMagic",
+    Curse   = "dispelAlertColorCurse",
+    Poison  = "dispelAlertColorPoison",
+    Disease = "dispelAlertColorDisease",
+}
+
+-- Returns the color table to use for a dispel alert, respecting the
+-- per-debuff-type color setting when enabled.
+local function GetDispelColor(db, debuffType)
+    if db.dispelAlertTypeColorsEnabled and debuffType then
+        local key = DEBUFF_COLOR_KEY[debuffType]
+        if key then return db[key] or db.dispelAlertColor end
+    end
+    return db.dispelAlertColor
+end
 
 -- Spell-name → { DebuffType = true }.  Built after spells load so every rank
 -- of a multi-rank Classic spell matches automatically (they share a name).
@@ -95,9 +114,9 @@ local function GetButtonDispelTypes(btn)
 end
 
 -- Returns (or lazily creates) the dispel-alert overlay for `btn`.
--- Uses four solid edge strips instead of the semi-transparent IconAlertAnts
--- sprite, so the border is always fully opaque and clearly visible.
--- A sine-wave alpha pulse provides the "attention" animation.
+-- Shape ("square"|"circle") and the alpha envelope (alphaMin → alphaMax) are
+-- configurable.  "square" uses four coloured edge strips; "circle" uses a
+-- pre-rendered ring texture (Textures/circle_ring.tga) for a true circle.
 local function GetOrCreateDispelOverlay(btn)
     if btn.SUB_dispelOverlay then return btn.SUB_dispelOverlay end
     local ov = CreateFrame("Frame", nil, btn)
@@ -108,16 +127,37 @@ local function GetOrCreateDispelOverlay(btn)
         t:SetTexture([[Interface\Buttons\WHITE8X8]])
         return t
     end
-    ov.eT = makeStrip() -- top
-    ov.eB = makeStrip() -- bottom
-    ov.eL = makeStrip() -- left
-    ov.eR = makeStrip() -- right
+    ov.eT = makeStrip()  -- top edge
+    ov.eB = makeStrip()  -- bottom edge
+    ov.eL = makeStrip()  -- left edge
+    ov.eR = makeStrip()  -- right edge
 
+    -- Circle mode: single pre-rendered ring texture (white ring on transparent
+    -- background) coloured at runtime via SetVertexColor.  Gives a true circle
+    -- instead of the rectangular-segment approximation.
+    ov.eRing = ov:CreateTexture(nil, "OVERLAY")
+    ov.eRing:SetTexture([[Interface\AddOns\SupportUnitButtons\Textures\circle_ring]])
+    ov.eRing:SetAllPoints(ov)
+    ov.eRing:Hide()
+
+    -- Animate per-texture, not per-frame.  Frame:SetAlpha() composites the whole
+    -- rectangular frame area (including empty/transparent regions) into an
+    -- off-screen buffer and blends that rectangle onto the screen, producing a
+    -- visible transparent rectangle over the button icon.
     ov._t = 0
     ov:SetScript("OnUpdate", function(self, elapsed)
         self._t = self._t + elapsed
-        -- pulse between 60 % and 100 % opacity, ~0.8 s period
-        self:SetAlpha(0.8 + 0.2 * math.sin(self._t * math.pi * 2.5))
+        local speed    = SUB.db and SUB.db.profile.dispelAlertPulseSpeed or 2.5
+        local alphaMin = SUB.db and SUB.db.profile.dispelAlertAlphaMin  or 0.0
+        local alphaMax = SUB.db and SUB.db.profile.dispelAlertAlphaMax  or 1.0
+        -- Smooth cosine oscillation: phase goes 0 → 1 → 0 with no dead-time.
+        local phase = (1 - math.cos(self._t * math.pi * speed)) / 2
+        local a = alphaMin + (alphaMax - alphaMin) * phase
+        self.eT:SetAlpha(a)
+        self.eB:SetAlpha(a)
+        self.eL:SetAlpha(a)
+        self.eR:SetAlpha(a)
+        self.eRing:SetAlpha(a)
     end)
 
     btn.SUB_dispelOverlay = ov
@@ -135,62 +175,88 @@ function SUB:UpdateDispelHighlight(btn)
         if btn.SUB_dispelOverlay then btn.SUB_dispelOverlay:Hide() end
         return
     end
-    local unit = btn.SUB_unit
-    if not unit or not CE.Unit.UnitExists(unit) then
-        if btn.SUB_dispelOverlay then btn.SUB_dispelOverlay:Hide() end
-        return
-    end
-    -- Scan the unit's debuffs for a type this spell can dispel.
+    -- Determine the debuff type that triggers the alert.
+    -- In preview mode the unit-aura check is skipped so the appearance can be
+    -- adjusted in the options panel outside of combat.
     local foundType
-    for i = 1, 40 do
-        local name, _, _, debuffType = CE.Unit.UnitAura(unit, i, "HARMFUL")
-        if not name then break end
-        if debuffType and types[debuffType] then
-            foundType = debuffType
-            break
+    if self.dispelAlertPreview then
+        for t in pairs(types) do foundType = t; break end
+    else
+        local unit = btn.SUB_unit
+        if not unit or not CE.Unit.UnitExists(unit) then
+            if btn.SUB_dispelOverlay then btn.SUB_dispelOverlay:Hide() end
+            return
+        end
+        for i = 1, 40 do
+            local name, _, _, debuffType = CE.Unit.UnitAura(unit, i, "HARMFUL")
+            if not name then break end
+            if debuffType and types[debuffType] then
+                foundType = debuffType
+                break
+            end
         end
     end
     local ov = GetOrCreateDispelOverlay(btn)
     if foundType then
-        -- Frame bounds: extend slightly beyond button so the border sits on the
-        -- visual edge of Masque-skinned buttons (mirrors LibButtonGlow sizing).
-        -- Frame-level refreshed every call to stay above Masque textures.
-        local pad = math.max(2, math.floor(btn:GetWidth() * 0.10))
-        ov:SetFrameLevel(btn:GetFrameLevel() + 7)
+        -- Position the overlay frame around (or inside) the button.
+        -- dispelAlertPadding: positive = extends outside the button edge,
+        -- negative = inset inside the button.
+        local pad = self.db.profile.dispelAlertPadding
+        if pad == nil then pad = 3 end
+        -- Both overlay levels are derived from the CURRENT button frame level so
+        -- they stay correct even if Masque changes the button's level after the
+        -- text overlay was first created.
+        local baseLevel = btn:GetFrameLevel()
+        if btn.SUB_textOverlay then
+            btn.SUB_textOverlay:SetFrameLevel(baseLevel + 10)
+        end
+        ov:SetFrameLevel(baseLevel + 7)
         ov:ClearAllPoints()
-        ov:SetPoint("TOPLEFT", btn, "TOPLEFT", -pad, pad)
-        ov:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", pad, -pad)
+        ov:SetPoint("TOPLEFT",     btn, "TOPLEFT",     -pad,  pad)
+        ov:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT",  pad, -pad)
 
-        -- Colour all four strips.
-        local col = self.db.profile.dispelAlertColor
-        local BW  = math.max(2, math.floor(btn:GetWidth() * 0.06)) -- border width
-        for _, strip in ipairs({ ov.eT, ov.eB, ov.eL, ov.eR }) do
-            strip:SetVertexColor(col.r, col.g, col.b, 1)
+        local col   = GetDispelColor(self.db.profile, foundType)
+        local shape = self.db.profile.dispelAlertShape or "square"
+
+        local bwCfg = self.db.profile.dispelAlertBorderWidth or 0
+        local BW    = bwCfg > 0 and bwCfg
+                      or math.max(2, math.floor(btn:GetWidth() * 0.06))
+
+        -- Colour the square-mode strips up front; circle ring is coloured in its branch.
+        for _, s in ipairs({ ov.eT, ov.eB, ov.eL, ov.eR }) do
+            s:SetVertexColor(col.r, col.g, col.b, 1)
         end
 
-        -- Top strip
-        ov.eT:ClearAllPoints()
-        ov.eT:SetPoint("TOPLEFT", ov, "TOPLEFT", 0, 0)
-        ov.eT:SetPoint("TOPRIGHT", ov, "TOPRIGHT", 0, 0)
-        ov.eT:SetHeight(BW)
+        if shape == "circle" then
+            -- Circle mode: pre-rendered ring texture scaled to the overlay size.
+            -- Gives a smooth, true circle — no segment approximation needed.
+            ov.eT:Hide(); ov.eB:Hide(); ov.eL:Hide(); ov.eR:Hide()
+            ov.eRing:SetVertexColor(col.r, col.g, col.b, 1)
+            ov.eRing:Show()
+        else
+            -- Square mode: full-width strips; ring texture hidden.
+            ov.eRing:Hide()
 
-        -- Bottom strip
-        ov.eB:ClearAllPoints()
-        ov.eB:SetPoint("BOTTOMLEFT", ov, "BOTTOMLEFT", 0, 0)
-        ov.eB:SetPoint("BOTTOMRIGHT", ov, "BOTTOMRIGHT", 0, 0)
-        ov.eB:SetHeight(BW)
+            ov.eT:ClearAllPoints()
+            ov.eT:SetPoint("TOPLEFT",  ov, "TOPLEFT",  0, 0)
+            ov.eT:SetPoint("TOPRIGHT", ov, "TOPRIGHT", 0, 0)
+            ov.eT:SetHeight(BW); ov.eT:Show()
 
-        -- Left strip (inset by BW top/bottom to avoid corner overlap)
-        ov.eL:ClearAllPoints()
-        ov.eL:SetPoint("TOPLEFT", ov, "TOPLEFT", 0, -BW)
-        ov.eL:SetPoint("BOTTOMLEFT", ov, "BOTTOMLEFT", 0, BW)
-        ov.eL:SetWidth(BW)
+            ov.eB:ClearAllPoints()
+            ov.eB:SetPoint("BOTTOMLEFT",  ov, "BOTTOMLEFT",  0, 0)
+            ov.eB:SetPoint("BOTTOMRIGHT", ov, "BOTTOMRIGHT", 0, 0)
+            ov.eB:SetHeight(BW); ov.eB:Show()
 
-        -- Right strip
-        ov.eR:ClearAllPoints()
-        ov.eR:SetPoint("TOPRIGHT", ov, "TOPRIGHT", 0, -BW)
-        ov.eR:SetPoint("BOTTOMRIGHT", ov, "BOTTOMRIGHT", 0, BW)
-        ov.eR:SetWidth(BW)
+            ov.eL:ClearAllPoints()
+            ov.eL:SetPoint("TOPLEFT",    ov, "TOPLEFT",    0, -BW)
+            ov.eL:SetPoint("BOTTOMLEFT", ov, "BOTTOMLEFT", 0,  BW)
+            ov.eL:SetWidth(BW); ov.eL:Show()
+
+            ov.eR:ClearAllPoints()
+            ov.eR:SetPoint("TOPRIGHT",    ov, "TOPRIGHT",    0, -BW)
+            ov.eR:SetPoint("BOTTOMRIGHT", ov, "BOTTOMRIGHT", 0,  BW)
+            ov.eR:SetWidth(BW); ov.eR:Show()
+        end
 
         ov:Show()
     else
@@ -309,8 +375,8 @@ function SUB:OnInitialize()
             end
             frame.subOpenOptionsBtn:SetShown(i == 3)
         end,
-        [1]           = { title = L["TUTORIAL_TITLE"], text = L["TUTORIAL_P1"], image = "Interface\\AddOns\\SupportUnitButtons\\sub_tutorial_bars", imageW = 300, imageH = 77 },
-        [2]           = { title = L["TUTORIAL_TITLE"], text = L["TUTORIAL_P2"], image = "Interface\\AddOns\\SupportUnitButtons\\sub_tutorial_button", imageW = 300, imageH = 200 },
+        [1]           = { title = L["TUTORIAL_TITLE"], text = L["TUTORIAL_P1"], image = "Interface\\AddOns\\SupportUnitButtons\\Textures\\sub_tutorial_bars", imageW = 300, imageH = 77 },
+        [2]           = { title = L["TUTORIAL_TITLE"], text = L["TUTORIAL_P2"], image = "Interface\\AddOns\\SupportUnitButtons\\Textures\\sub_tutorial_button", imageW = 300, imageH = 200 },
         [3]           = { title = L["TUTORIAL_TITLE"], text = L["TUTORIAL_P3"] },
     })
 
@@ -465,10 +531,14 @@ local function WrapButtonForUnitTarget(header, btn)
 end
 
 local CORNER_OFFSET = {
-    TOPLEFT     = { -3, 1 },
-    TOPRIGHT    = { 3, 1 },
+    TOPLEFT     = { -3,  1 },
+    TOPRIGHT    = {  3,  1 },
     BOTTOMLEFT  = { -3, -1 },
-    BOTTOMRIGHT = { 3, -1 },
+    BOTTOMRIGHT = {  3, -1 },
+    TOP         = {  0,  1 },
+    BOTTOM      = {  0, -1 },
+    LEFT        = { -3,  0 },
+    RIGHT       = {  3,  0 },
 }
 
 -- Returns (or lazily creates) a child frame used to host button text overlays.
@@ -897,30 +967,33 @@ function SUB:OnButtonContentsChanged(event, btn, state, btnType, action)
     end
 end
 
+function SUB:ClearSharedButton(btn)
+    if CE.Combat.InCombatLockdown() then return end
+    btn:SetState(nil, "empty", nil)
+    btn:SetAttribute("SUB_macro", nil)
+    for _, field in ipairs({"SUB_rankText", "SUB_castCountText", "SUB_buffStatusText"}) do
+        if btn[field] then btn[field]:SetText("") end
+    end
+    self:UpdateDispelHighlight(btn)
+end
+
+function SUB:SyncSharedSlotButton(btn, isEmpty, btnType, action)
+    if isEmpty then
+        self:ClearSharedButton(btn)
+    else
+        self:ApplyButtonState(btn, btnType, action)
+    end
+end
+
 function SUB:SyncSharedSlot(sourceUnit, index, btnType, action)
     if self.syncing then return end
     self.syncing = true
     local isEmpty = not btnType or btnType == "empty" or not action
     for _, unit in ipairs(UNITS) do
-        if unit ~= sourceUnit then
-            local bd = self.bars[unit]
-            if bd then
-                local btn = bd.sharedButtons[index]
-                if btn then
-                    if isEmpty then
-                        if not CE.Combat.InCombatLockdown() then
-                            btn:SetState(nil, "empty", nil)
-                            btn:SetAttribute("SUB_macro", nil)
-                            if btn.SUB_rankText then btn.SUB_rankText:SetText("") end
-                            if btn.SUB_castCountText then btn.SUB_castCountText:SetText("") end
-                            if btn.SUB_buffStatusText then btn.SUB_buffStatusText:SetText("") end
-                            self:UpdateDispelHighlight(btn)
-                        end
-                    else
-                        self:ApplyButtonState(btn, btnType, action)
-                    end
-                end
-            end
+        local bd = unit ~= sourceUnit and self.bars[unit]
+        local btn = bd and bd.sharedButtons[index]
+        if btn then
+            self:SyncSharedSlotButton(btn, isEmpty, btnType, action)
         end
     end
     self.syncing = false

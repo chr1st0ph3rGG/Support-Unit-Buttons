@@ -18,6 +18,9 @@ L["Show the player bar only when you are in a group"]                           
 L["Always show name labels"]                                                                         = "Mostra sempre le etichette dei nomi"
 L["Show the unit name label even when bars are locked.\nLabels are always shown while unlocked."]    =
 "Mostra il nome dell'unità anche quando le barre sono bloccate.\nLe etichette sono sempre mostrate quando sbloccate."
+L["Always show empty buttons"]                                                                       = "Mostra sempre i pulsanti vuoti"
+L["Keep empty slots visible at all times, not only while dragging spells."]                          =
+"Mantiene gli slot vuoti sempre visibili, non solo durante il trascinamento degli incantesimi."
 L["Drag-off modifier"]                                                                               = "Modificatore di rimozione"
 L["Modifier key required to drag a spell OFF a button.\nDropping spells onto buttons always works."] =
 "Tasto modificatore richiesto per trascinare un incantesimo via da un pulsante.\nDepositare incantesimi sui pulsanti funziona sempre."
@@ -64,9 +67,14 @@ L["Outline"]                                                                    
 L["None"]                                                                                            = "Nessuno"
 L["Thick outline"]                                                                                   = "Contorno spesso"
 L["Corner"]                                                                                          = "Angolo"
+L["Position"]                                                                                        = "Posizione"
 L["Top left"]                                                                                        = "In alto a sinistra"
+L["Top"]                                                                                             = "Alto"
 L["Top right"]                                                                                       = "In alto a destra"
+L["Left"]                                                                                            = "Sinistra"
+L["Right"]                                                                                           = "Destra"
 L["Bottom left"]                                                                                     = "In basso a sinistra"
+L["Bottom"]                                                                                          = "Basso"
 L["Bottom right"]                                                                                    = "In basso a destra"
 L["Offset X"]                                                                                        = "Offset X"
 L["Horizontal fine-tuning offset (added to the corner's base position)"]                             =
@@ -105,15 +113,55 @@ L["Open Options"]                                                               
 
 -- Avviso dissipazione
 L["Dispel Alert"]                                                                                    = "Avviso dissipazione"
-L["Show a marching-ants border on buttons that can dispel a debuff the unit currently has."]         =
-"Mostra un bordo animato sui pulsanti che possono dissipare un debuff attuale dell'unità."
-L["Border Color"]                                                                                    = "Colore bordo"
+L["Show a pulsing border on buttons that can dispel a debuff the unit currently has."]               =
+"Mostra un bordo pulsante sui pulsanti che possono dissipare un debuff attuale dell'unità."
+L["Border Appearance"]                                                                               = "Aspetto del bordo"
+L["Shape"]                                                                                           = "Forma"
+L["Border shape. Use Circle for round Masque button skins."]                                         =
+"Forma del bordo. Usa Cerchio per skin di pulsanti Masque rotondi."
+L["Square"]                                                                                          = "Quadrato"
+L["Circle"]                                                                                          = "Cerchio"
+L["Pulse Speed"]                                                                                     = "Velocità pulsazione"
+L["Controls how fast the border pulses."]                                                            =
+"Controlla la velocità di pulsazione del bordo."
+L["Alpha minimum"]                                                                                   = "Alpha minimo"
+L["Minimum opacity at the trough of the animation. 0 = fully fades out, above 0 = always visible."] =
+"Opacità minima al punto più basso dell'animazione. 0 = svanisce completamente, sopra 0 = sempre visibile."
+L["Alpha maximum"]                                                                                   = "Alpha massimo"
+L["Maximum opacity at the peak of the animation."]                                                   =
+"Opacità massima al picco dell'animazione."
+L["Border Width"]                                                                                    = "Spessore bordo"
+L["Border width in pixels. 0 = automatic (6 % of button size)."]                                    =
+"Spessore del bordo in pixel. 0 = automatico (6 % della dimensione del pulsante)."
+L["Border Padding"]                                                                                  = "Spaziatura bordo"
+L["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."] =
+"Distanza dal bordo del pulsante in pixel. Positivo = si estende fuori dal pulsante, negativo = incassato dentro il pulsante."
+L["Type Colors"]                                                                                     = "Colori per tipo"
+L["Per debuff type"]                                                                                 = "Per tipo di debuff"
+L["Use a different color per debuff type (Magic, Curse, Poison, Disease)."]                          =
+"Usa un colore diverso per tipo di debuff (Magia, Maledizione, Veleno, Malattia)."
+L["Magic"]                                                                                           = "Magia"
+L["Curse"]                                                                                           = "Maledizione"
+L["Poison"]                                                                                          = "Veleno"
+L["Disease"]                                                                                         = "Malattia"
+L["Preview"]                                                                                         = "Anteprima"
+L["Simulate dispel alert"]                                                                           = "Simula avviso dissipazione"
+L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."]            =
+"Mostra l'avviso su tutti i pulsanti di dissipazione per regolare l'aspetto fuori dal combattimento."
 L["Sound"]                                                                                           = "Suono"
 L["Activate sound"]                                                                                  = "Attiva suono"
 L["Plays a sound when a party member gets a dispellable debuff."]                                    =
 "Riproduce un suono quando un membro del gruppo riceve un debuff dissipabile."
 L["Channel"]                                                                                         = "Canale"
 L["Audio Channel for Dispel Alert Sound"]                                                            = "Canale audio per il suono di avviso dissipazione"
+
+-- Masque
+L["Masque"]                                                                                          = "Masque"
+L["Open Masque Options"]                                                                             = "Apri opzioni Masque"
+L["Open the Masque skin options for SupportUnitButtons."]                                            =
+"Apre le opzioni skin Masque per SupportUnitButtons."
+L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]                 =
+"Masque è necessario per applicare skin ai pulsanti.\nInstalla Masque per abilitare questa funzione."
 
 -- Stato del buff
 L["Buff Status"]                                                                                     = "Stato del buff"

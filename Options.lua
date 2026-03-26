@@ -8,6 +8,7 @@ local AceCfg         = LibStub("AceConfig-3.0")
 local AceCfgD        = LibStub("AceConfigDialog-3.0")
 local AceDBOpt       = LibStub("AceDBOptions-3.0")
 local LSM            = LibStub("LibSharedMedia-3.0")
+local Masque         = LibStub("Masque", true)
 local L              = LibStub("AceLocale-3.0"):GetLocale("SupportUnitButtons")
 
 local UNITS          = { "player", "party1", "party2", "party3", "party4" }
@@ -249,6 +250,41 @@ function SUB:BuildOptionsTable()
                                 type  = "execute",
                                 order = 5,
                                 func  = function() self:ResetAllPositions() end,
+                            },
+                        },
+                    },
+
+                    ---------- Masque ----------
+                    masque = {
+                        name   = L["Masque"],
+                        type   = "group",
+                        inline = true,
+                        order  = 4,
+                        args   = {
+                            openMasque = {
+                                name     = L["Open Masque Options"],
+                                desc     = function()
+                                    if Masque then
+                                        return L["Open the Masque skin options for SupportUnitButtons."]
+                                    else
+                                        return L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]
+                                    end
+                                end,
+                                type     = "execute",
+                                order    = 1,
+                                disabled = function() return not Masque end,
+                                func     = function()
+                                    -- Trigger Masque's lazy options load if not done yet
+                                    local ldr = _G["MSQ_LDR_FRAME"]
+                                    if ldr then
+                                        local fn = ldr:GetScript("OnShow")
+                                        if fn then fn() end
+                                    end
+                                    AceCfgD:Open("Masque")
+                                    AceCfgD:SelectGroup("Masque", "Skins",
+                                        "SupportUnitButtons",
+                                        "SupportUnitButtons_Buttons")
+                                end,
                             },
                         },
                     },
@@ -610,14 +646,18 @@ function SUB:BuildOptionsTable()
                                 end,
                             },
                             buffStatusCorner = {
-                                name     = L["Corner"],
+                                name     = L["Position"],
                                 type     = "select",
                                 order    = 5,
                                 disabled = function() return not self.db.profile.showBuffStatus end,
                                 values   = {
                                     TOPLEFT     = L["Top left"],
+                                    TOP         = L["Top"],
                                     TOPRIGHT    = L["Top right"],
+                                    LEFT        = L["Left"],
+                                    RIGHT       = L["Right"],
                                     BOTTOMLEFT  = L["Bottom left"],
+                                    BOTTOM      = L["Bottom"],
                                     BOTTOMRIGHT = L["Bottom right"],
                                 },
                                 get      = function() return self.db.profile.buffStatusCorner end,
@@ -721,7 +761,7 @@ function SUB:BuildOptionsTable()
                             enable = {
                                 name  = L["Enable"],
                                 desc  = L
-                                    ["Show a marching-ants border on buttons that can dispel a debuff the unit currently has."],
+                                    ["Show a pulsing border on buttons that can dispel a debuff the unit currently has."],
                                 type  = "toggle",
                                 order = 1,
                                 get   = function() return self.db.profile.dispelAlert end,
@@ -733,7 +773,7 @@ function SUB:BuildOptionsTable()
                         },
                     },
                     dispelColorGroup = {
-                        name     = L["Border Color"],
+                        name     = L["Border Appearance"],
                         type     = "group",
                         inline   = true,
                         order    = 2,
@@ -753,13 +793,220 @@ function SUB:BuildOptionsTable()
                                     self:UpdateAllDispelHighlights()
                                 end,
                             },
+                            shape = {
+                                name   = L["Shape"],
+                                desc   = L["Border shape. Use Circle for round Masque button skins."],
+                                type   = "select",
+                                order  = 2,
+                                values = {
+                                    square = L["Square"],
+                                    circle = L["Circle"],
+                                },
+                                get    = function()
+                                    return self.db.profile.dispelAlertShape or "square"
+                                end,
+                                set    = function(_, v)
+                                    self.db.profile.dispelAlertShape = v
+                                    self:UpdateAllDispelHighlights()
+                                end,
+                            },
+                            pulseSpeed = {
+                                name  = L["Pulse Speed"],
+                                desc  = L["Controls how fast the border pulses."],
+                                type  = "range",
+                                order = 3,
+                                min   = 0.5,
+                                max   = 5.0,
+                                step  = 0.1,
+                                get   = function()
+                                    return self.db.profile.dispelAlertPulseSpeed or 2.5
+                                end,
+                                set   = function(_, v)
+                                    self.db.profile.dispelAlertPulseSpeed = v
+                                end,
+                            },
+                            alphaMin = {
+                                name  = L["Alpha minimum"],
+                                desc  = L["Minimum opacity at the trough of the animation. 0 = fully fades out, above 0 = always visible."],
+                                type  = "range",
+                                order = 4,
+                                min   = 0.0,
+                                max   = 1.0,
+                                step  = 0.05,
+                                get   = function()
+                                    return self.db.profile.dispelAlertAlphaMin or 0.0
+                                end,
+                                set   = function(_, v)
+                                    self.db.profile.dispelAlertAlphaMin = v
+                                end,
+                            },
+                            alphaMax = {
+                                name  = L["Alpha maximum"],
+                                desc  = L["Maximum opacity at the peak of the animation."],
+                                type  = "range",
+                                order = 5,
+                                min   = 0.0,
+                                max   = 1.0,
+                                step  = 0.05,
+                                get   = function()
+                                    return self.db.profile.dispelAlertAlphaMax or 1.0
+                                end,
+                                set   = function(_, v)
+                                    self.db.profile.dispelAlertAlphaMax = v
+                                end,
+                            },
+                            borderWidth = {
+                                name  = L["Border Width"],
+                                desc  = L["Border width in pixels. 0 = automatic (6 % of button size)."],
+                                type  = "range",
+                                order = 6,
+                                min   = 0,
+                                max   = 12,
+                                step  = 1,
+                                get   = function()
+                                    return self.db.profile.dispelAlertBorderWidth or 0
+                                end,
+                                set   = function(_, v)
+                                    self.db.profile.dispelAlertBorderWidth = v
+                                    self:UpdateAllDispelHighlights()
+                                end,
+                            },
+                            borderPadding = {
+                                name  = L["Border Padding"],
+                                desc  = L["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."],
+                                type  = "range",
+                                order = 7,
+                                min   = -8,
+                                max   = 10,
+                                step  = 1,
+                                get   = function()
+                                    local v = self.db.profile.dispelAlertPadding
+                                    return v ~= nil and v or 3
+                                end,
+                                set   = function(_, v)
+                                    self.db.profile.dispelAlertPadding = v
+                                    self:UpdateAllDispelHighlights()
+                                end,
+                            },
+                        },
+                    },
+                    dispelTypeColorsGroup = {
+                        name     = L["Type Colors"],
+                        type     = "group",
+                        inline   = true,
+                        order    = 3,
+                        disabled = function() return not self.db.profile.dispelAlert end,
+                        args     = {
+                            enable = {
+                                name  = L["Per debuff type"],
+                                desc  = L["Use a different color per debuff type (Magic, Curse, Poison, Disease)."],
+                                type  = "toggle",
+                                order = 1,
+                                get   = function() return self.db.profile.dispelAlertTypeColorsEnabled end,
+                                set   = function(_, v)
+                                    self.db.profile.dispelAlertTypeColorsEnabled = v
+                                    self:UpdateAllDispelHighlights()
+                                end,
+                            },
+                            colorMagic = {
+                                name     = L["Magic"],
+                                type     = "color",
+                                order    = 2,
+                                disabled = function()
+                                    return not self.db.profile.dispelAlert
+                                        or not self.db.profile.dispelAlertTypeColorsEnabled
+                                end,
+                                get      = function()
+                                    local c = self.db.profile.dispelAlertColorMagic
+                                    return c.r, c.g, c.b
+                                end,
+                                set      = function(_, r, g, b)
+                                    local c = self.db.profile.dispelAlertColorMagic
+                                    c.r, c.g, c.b = r, g, b
+                                    self:UpdateAllDispelHighlights()
+                                end,
+                            },
+                            colorCurse = {
+                                name     = L["Curse"],
+                                type     = "color",
+                                order    = 3,
+                                disabled = function()
+                                    return not self.db.profile.dispelAlert
+                                        or not self.db.profile.dispelAlertTypeColorsEnabled
+                                end,
+                                get      = function()
+                                    local c = self.db.profile.dispelAlertColorCurse
+                                    return c.r, c.g, c.b
+                                end,
+                                set      = function(_, r, g, b)
+                                    local c = self.db.profile.dispelAlertColorCurse
+                                    c.r, c.g, c.b = r, g, b
+                                    self:UpdateAllDispelHighlights()
+                                end,
+                            },
+                            colorPoison = {
+                                name     = L["Poison"],
+                                type     = "color",
+                                order    = 4,
+                                disabled = function()
+                                    return not self.db.profile.dispelAlert
+                                        or not self.db.profile.dispelAlertTypeColorsEnabled
+                                end,
+                                get      = function()
+                                    local c = self.db.profile.dispelAlertColorPoison
+                                    return c.r, c.g, c.b
+                                end,
+                                set      = function(_, r, g, b)
+                                    local c = self.db.profile.dispelAlertColorPoison
+                                    c.r, c.g, c.b = r, g, b
+                                    self:UpdateAllDispelHighlights()
+                                end,
+                            },
+                            colorDisease = {
+                                name     = L["Disease"],
+                                type     = "color",
+                                order    = 5,
+                                disabled = function()
+                                    return not self.db.profile.dispelAlert
+                                        or not self.db.profile.dispelAlertTypeColorsEnabled
+                                end,
+                                get      = function()
+                                    local c = self.db.profile.dispelAlertColorDisease
+                                    return c.r, c.g, c.b
+                                end,
+                                set      = function(_, r, g, b)
+                                    local c = self.db.profile.dispelAlertColorDisease
+                                    c.r, c.g, c.b = r, g, b
+                                    self:UpdateAllDispelHighlights()
+                                end,
+                            },
+                        },
+                    },
+                    dispelPreviewGroup = {
+                        name     = L["Preview"],
+                        type     = "group",
+                        inline   = true,
+                        order    = 4,
+                        disabled = function() return not self.db.profile.dispelAlert end,
+                        args     = {
+                            preview = {
+                                name  = L["Simulate dispel alert"],
+                                desc  = L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."],
+                                type  = "toggle",
+                                order = 1,
+                                get   = function() return SUB.dispelAlertPreview end,
+                                set   = function(_, v)
+                                    SUB.dispelAlertPreview = v
+                                    SUB:UpdateAllDispelHighlights()
+                                end,
+                            },
                         },
                     },
                     dispelSoundGroup = {
                         name     = L["Sound"],
                         type     = "group",
                         inline   = true,
-                        order    = 3,
+                        order    = 5,
                         disabled = function() return not self.db.profile.dispelAlert end,
                         args     = {
                             dispelAlertSoundEnabled = {

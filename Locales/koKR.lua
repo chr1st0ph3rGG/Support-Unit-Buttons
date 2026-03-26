@@ -18,6 +18,9 @@ L["Show the player bar only when you are in a group"]                           
 L["Always show name labels"]                                                                         = "이름 레이블 항상 표시"
 L["Show the unit name label even when bars are locked.\nLabels are always shown while unlocked."]    =
 "바가 잠겨 있어도 유닛 이름 레이블을 표시합니다.\n잠금 해제 시 레이블은 항상 표시됩니다."
+L["Always show empty buttons"]                                                                       = "빈 버튼 항상 표시"
+L["Keep empty slots visible at all times, not only while dragging spells."]                          =
+"주문을 드래그할 때뿐만 아니라 항상 빈 슬롯을 표시합니다."
 L["Drag-off modifier"]                                                                               = "제거 수정자"
 L["Modifier key required to drag a spell OFF a button.\nDropping spells onto buttons always works."] =
 "버튼에서 주문을 드래그하여 제거하려면 필요한 수정자 키.\n버튼에 주문을 드롭하는 것은 항상 작동합니다."
@@ -62,9 +65,14 @@ L["Outline"]                                                                    
 L["None"]                                                                                            = "없음"
 L["Thick outline"]                                                                                   = "두꺼운 윤곽선"
 L["Corner"]                                                                                          = "모서리"
+L["Position"]                                                                                        = "위치"
 L["Top left"]                                                                                        = "왼쪽 상단"
+L["Top"]                                                                                             = "위"
 L["Top right"]                                                                                       = "오른쪽 상단"
+L["Left"]                                                                                            = "왼쪽"
+L["Right"]                                                                                           = "오른쪽"
 L["Bottom left"]                                                                                     = "왼쪽 하단"
+L["Bottom"]                                                                                          = "아래"
 L["Bottom right"]                                                                                    = "오른쪽 하단"
 L["Offset X"]                                                                                        = "오프셋 X"
 L["Horizontal fine-tuning offset (added to the corner's base position)"]                             = "수평 미세 조정 오프셋 (모서리 기본 위치에 추가됨)"
@@ -101,14 +109,54 @@ L["Open Options"]                                                               
 
 -- 해제 경고
 L["Dispel Alert"]                                                                                    = "해제 경고"
-L["Show a marching-ants border on buttons that can dispel a debuff the unit currently has."]         =
-"유닛이 현재 가진 디버프를 해제할 수 있는 버튼에 애니메이션 테두리를 표시합니다."
-L["Border Color"]                                                                                    = "테두리 색상"
+L["Show a pulsing border on buttons that can dispel a debuff the unit currently has."]               =
+"유닛이 현재 가진 디버프를 해제할 수 있는 버튼에 맥동 테두리를 표시합니다."
+L["Border Appearance"]                                                                               = "테두리 모양"
+L["Shape"]                                                                                           = "형태"
+L["Border shape. Use Circle for round Masque button skins."]                                         =
+"테두리 형태. 둥근 Masque 버튼 스킨에는 원형을 사용하세요."
+L["Square"]                                                                                          = "사각형"
+L["Circle"]                                                                                          = "원형"
+L["Pulse Speed"]                                                                                     = "맥동 속도"
+L["Controls how fast the border pulses."]                                                            =
+"테두리의 맥동 속도를 조절합니다."
+L["Alpha minimum"]                                                                                   = "알파 최솟값"
+L["Minimum opacity at the trough of the animation. 0 = fully fades out, above 0 = always visible."] =
+"애니메이션 최저점의 최소 불투명도. 0 = 완전히 사라짐, 0 초과 = 항상 표시."
+L["Alpha maximum"]                                                                                   = "알파 최댓값"
+L["Maximum opacity at the peak of the animation."]                                                   =
+"애니메이션 최고점의 최대 불투명도."
+L["Border Width"]                                                                                    = "테두리 너비"
+L["Border width in pixels. 0 = automatic (6 % of button size)."]                                    =
+"테두리 너비(픽셀). 0 = 자동(버튼 크기의 6%)."
+L["Border Padding"]                                                                                  = "테두리 여백"
+L["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."] =
+"버튼 가장자리와의 거리(픽셀). 양수 = 버튼 밖으로 확장, 음수 = 버튼 안쪽으로 들어감."
+L["Type Colors"]                                                                                     = "유형 색상"
+L["Per debuff type"]                                                                                 = "디버프 유형별"
+L["Use a different color per debuff type (Magic, Curse, Poison, Disease)."]                          =
+"디버프 유형별 다른 색상 사용(마법, 저주, 독, 질병)."
+L["Magic"]                                                                                           = "마법"
+L["Curse"]                                                                                           = "저주"
+L["Poison"]                                                                                          = "독"
+L["Disease"]                                                                                         = "질병"
+L["Preview"]                                                                                         = "미리보기"
+L["Simulate dispel alert"]                                                                           = "해제 경고 시뮬레이션"
+L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."]            =
+"전투 외부에서 외관을 조정할 수 있도록 모든 해제 버튼에 경고를 표시합니다."
 L["Sound"]                                                                                           = "사운드"
 L["Activate sound"]                                                                                  = "사운드 활성화"
 L["Plays a sound when a party member gets a dispellable debuff."]                                    = "파티 멤버가 해제 가능한 디버프를 받을 때 사운드를 재생합니다."
 L["Channel"]                                                                                         = "채널"
 L["Audio Channel for Dispel Alert Sound"]                                                            = "해제 경고 사운드의 오디오 채널"
+
+-- Masque
+L["Masque"]                                                                                          = "Masque"
+L["Open Masque Options"]                                                                             = "Masque 옵션 열기"
+L["Open the Masque skin options for SupportUnitButtons."]                                            =
+"SupportUnitButtons의 Masque 스킨 옵션을 엽니다."
+L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]                 =
+"버튼에 스킨을 적용하려면 Masque가 필요합니다.\nMasque를 설치하여 이 기능을 활성화하세요."
 
 -- 버프 상태
 L["Buff Status"]                                                                                     = "버프 상태"

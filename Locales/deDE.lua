@@ -67,9 +67,14 @@ L["Outline"]                                                                    
 L["None"]                                                                                            = "Keine"
 L["Thick outline"]                                                                                   = "Dicke Kontur"
 L["Corner"]                                                                                          = "Ecke"
+L["Position"]                                                                                        = "Position"
 L["Top left"]                                                                                        = "Oben links"
+L["Top"]                                                                                             = "Oben"
 L["Top right"]                                                                                       = "Oben rechts"
+L["Left"]                                                                                            = "Links"
+L["Right"]                                                                                           = "Rechts"
 L["Bottom left"]                                                                                     = "Unten links"
+L["Bottom"]                                                                                          = "Unten"
 L["Bottom right"]                                                                                    = "Unten rechts"
 L["Offset X"]                                                                                        = "Versatz X"
 L["Horizontal fine-tuning offset (added to the corner's base position)"]                             =
@@ -108,15 +113,55 @@ L["Open Options"]                                                               
 
 -- Entzauberungs-Alarm
 L["Dispel Alert"]                                                                                    = "Entzauberungs-Alarm"
-L["Show a marching-ants border on buttons that can dispel a debuff the unit currently has."]         =
+L["Show a pulsing border on buttons that can dispel a debuff the unit currently has."]               =
 "Zeigt einen pulsierenden Rand auf Buttons die einen aktuellen Debuff der Einheit entzaubern können."
-L["Border Color"]                                                                                    = "Randfarbe"
+L["Border Appearance"]                                                                               = "Randdarstellung"
+L["Shape"]                                                                                           = "Form"
+L["Border shape. Use Circle for round Masque button skins."]                                         =
+"Randform. Kreis für runde Masque-Button-Skins verwenden."
+L["Square"]                                                                                          = "Quadrat"
+L["Circle"]                                                                                          = "Kreis"
+L["Pulse Speed"]                                                                                     = "Pulsgeschwindigkeit"
+L["Controls how fast the border pulses."]                                                            =
+"Steuert wie schnell der Rand pulsiert."
+L["Alpha minimum"]                                                                                   = "Alpha-Minimum"
+L["Minimum opacity at the trough of the animation. 0 = fully fades out, above 0 = always visible."] =
+"Minimale Deckkraft am Tiefpunkt der Animation. 0 = blendet vollständig aus, über 0 = immer sichtbar."
+L["Alpha maximum"]                                                                                   = "Alpha-Maximum"
+L["Maximum opacity at the peak of the animation."]                                                   =
+"Maximale Deckkraft am Höhepunkt der Animation."
+L["Border Width"]                                                                                    = "Randbreite"
+L["Border width in pixels. 0 = automatic (6 % of button size)."]                                    =
+"Randbreite in Pixeln. 0 = automatisch (6 % der Button-Größe)."
+L["Border Padding"]                                                                                  = "Randabstand"
+L["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."] =
+"Abstand zur Button-Kante in Pixeln. Positiv = außerhalb des Buttons, negativ = innerhalb des Buttons."
+L["Type Colors"]                                                                                     = "Typ-Farben"
+L["Per debuff type"]                                                                                 = "Pro Debuff-Typ"
+L["Use a different color per debuff type (Magic, Curse, Poison, Disease)."]                          =
+"Verwendet eine eigene Farbe pro Debuff-Typ (Magie, Fluch, Gift, Seuche)."
+L["Magic"]                                                                                           = "Magie"
+L["Curse"]                                                                                           = "Fluch"
+L["Poison"]                                                                                          = "Gift"
+L["Disease"]                                                                                         = "Seuche"
+L["Preview"]                                                                                         = "Vorschau"
+L["Simulate dispel alert"]                                                                           = "Entzauberungs-Alarm simulieren"
+L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."]            =
+"Zeigt den Alarm auf allen Entzauberungs-Buttons damit die Darstellung außerhalb des Kampfes eingestellt werden kann."
 L["Sound"]                                                                                           = "Sound"
 L["Activate sound"]                                                                                  = "Sound aktivieren"
 L["Plays a sound when a party member gets a dispellable debuff."]                                    =
 "Spielt einen Sound wenn ein Gruppenmitglied einen entzauberbaren Debuff erhält."
 L["Channel"]                                                                                         = "Kanal"
 L["Audio Channel for Dispel Alert Sound"]                                                            = "Audio-Kanal für den Entzauberungs-Alarm-Sound"
+
+-- Masque
+L["Masque"]                                                                                          = "Masque"
+L["Open Masque Options"]                                                                             = "Masque-Optionen öffnen"
+L["Open the Masque skin options for SupportUnitButtons."]                                            =
+"Öffnet die Masque-Skin-Optionen für SupportUnitButtons."
+L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]                 =
+"Masque wird benötigt um die Buttons zu stylen.\nInstalliere Masque um diese Funktion zu nutzen."
 
 -- Buff-Status
 L["Buff Status"]                                                                                     = "Buff-Status"

@@ -66,9 +66,14 @@ L["Outline"]                                                                    
 L["None"]                                                                                            = true
 L["Thick outline"]                                                                                   = true
 L["Corner"]                                                                                          = true
+L["Position"]                                                                                        = true
 L["Top left"]                                                                                        = true
+L["Top"]                                                                                             = true
 L["Top right"]                                                                                       = true
+L["Left"]                                                                                            = true
+L["Right"]                                                                                           = true
 L["Bottom left"]                                                                                     = true
+L["Bottom"]                                                                                          = true
 L["Bottom right"]                                                                                    = true
 L["Offset X"]                                                                                        = true
 L["Horizontal fine-tuning offset (added to the corner's base position)"]                             = true
@@ -104,13 +109,43 @@ L["Open Options"]                                                               
 
 -- Dispel
 L["Dispel Alert"]                                                                                    = true
-L["Show a marching-ants border on buttons that can dispel a debuff the unit currently has."]         = true
-L["Border Color"]                                                                                    = true
+L["Show a pulsing border on buttons that can dispel a debuff the unit currently has."]               = true
+L["Border Appearance"]                                                                               = true
+L["Shape"]                                                                                           = true
+L["Border shape. Use Circle for round Masque button skins."]                                         = true
+L["Square"]                                                                                          = true
+L["Circle"]                                                                                          = true
+L["Pulse Speed"]                                                                                     = true
+L["Controls how fast the border pulses."]                                                            = true
+L["Alpha minimum"]                                                                                   = true
+L["Minimum opacity at the trough of the animation. 0 = fully fades out, above 0 = always visible."] = true
+L["Alpha maximum"]                                                                                   = true
+L["Maximum opacity at the peak of the animation."]                                                   = true
+L["Border Width"]                                                                                    = true
+L["Border width in pixels. 0 = automatic (6 % of button size)."]                                    = true
+L["Border Padding"]                                                                                  = true
+L["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."] = true
+L["Type Colors"]                                                                                     = true
+L["Per debuff type"]                                                                                 = true
+L["Use a different color per debuff type (Magic, Curse, Poison, Disease)."]                          = true
+L["Magic"]                                                                                           = true
+L["Curse"]                                                                                           = true
+L["Poison"]                                                                                          = true
+L["Disease"]                                                                                         = true
+L["Preview"]                                                                                         = true
+L["Simulate dispel alert"]                                                                           = true
+L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."]            = true
 L["Sound"]                                                                                           = true
 L["Activate sound"]                                                                                  = true
 L["Plays a sound when a party member gets a dispellable debuff."]                                    = true
 L["Channel"]                                                                                         = true
 L["Audio Channel for Dispel Alert Sound"]                                                            = true
+
+-- Masque
+L["Masque"]                                                                                          = true
+L["Open Masque Options"]                                                                             = true
+L["Open the Masque skin options for SupportUnitButtons."]                                            = true
+L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]                 = true
 
 -- Buff Status
 L["Buff Status"]                                                                                     = true
