@@ -41,7 +41,7 @@ local defaults          = SUB_NS.defaults
 SUB.bars                = {}
 SUB.masqueGroup         = nil
 SUB.syncing             = false
-SUB.dispelActiveUnits   = {} -- unit → true wenn aktuell ein dispellbarer Debuff aktiv ist
+SUB.dispelActiveUnits   = {} -- unit → true when a dispellable debuff is currently active
 
 -------------------------------------------------------------------------------
 -- Dispel Alert
@@ -276,8 +276,8 @@ end
 
 function SUB:OnInitialize()
     self.db = AceDB:New("SupportUnitButtonsDB", defaults)
-    -- knownBuffSpells auf die persistente global-Tabelle zeigen lassen,
-    -- damit sich das Wissen über Buff-Zauber sitzungsübergreifend aufbaut.
+    -- Point knownBuffSpells to the persistent global table so that
+    -- knowledge about buff spells accumulates across sessions.
     knownBuffSpells = self.db.global.buffSpells
 
     if Masque then
@@ -1014,12 +1014,12 @@ end
 -------------------------------------------------------------------------------
 -- Buff Status
 --
--- Zeigt verbleibende Buff-Dauer in der Button-Ecke wenn der Zauber des Buttons
--- als Buff auf dem Ziel aktiv ist.  Zeigt "-" wenn der Buff nicht aktiv ist.
--- Wird über UNIT_AURA-Events plus einen Sekundenticker aktualisiert.
+-- Shows remaining buff duration in the button corner when the button's spell
+-- is active as a buff on the target.  Shows "-" when the buff is not active.
+-- Updated via UNIT_AURA events plus a per-second ticker.
 -------------------------------------------------------------------------------
 
--- Gibt den Zaubernamen für einen spell-type Button zurück, oder nil.
+-- Returns the spell name for a spell-type button, or nil.
 local function GetButtonSpellName(btn)
     if btn._state_type ~= "spell" then return nil end
     local action = btn._state_action
@@ -1028,13 +1028,13 @@ local function GetButtonSpellName(btn)
     return info and info.name
 end
 
--- Zaubernamen die mindestens einmal als Spieler-Buff entdeckt wurden.
--- Wird zur Laufzeit befüllt; nur dann zeigen wir "-" wenn der Buff gerade nicht aktiv ist.
+-- Spell names that have been discovered at least once as a player buff.
+-- Populated at runtime; only then do we show "-" when the buff is currently inactive.
 local knownBuffSpells = {}
 
--- Durchsucht die Buffs einer Einheit nach einem vom Spieler gewirkten Buff
--- mit dem angegebenen Zaubernamen.  Gibt (expirationTime, duration) zurück, oder nil.
--- Markiert den Zaubernamen als bekannten Buff-Zauber sobald er gefunden wird.
+-- Searches a unit's buffs for a player-cast buff with the given spell name.
+-- Returns (expirationTime, duration), or nil.
+-- Marks the spell name as a known buff spell once found.
 local function FindPlayerBuffOnUnit(unit, spellName)
     if not unit or not CE.Unit.UnitExists(unit) then return nil end
     for i = 1, 40 do
@@ -1103,13 +1103,13 @@ function SUB:UpdateButtonBuffStatus(btn)
             fs:SetText(FormatBuffTime(remaining))
         end
     elseif knownBuffSpells[spellName] then
-        -- Bekannter Buff-Zauber, aber gerade nicht auf dieser Einheit aktiv.
+        -- Known buff spell, but currently not active on this unit.
         btn.SUB_buffExpiry = nil
         local c = db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 }
         fs:SetTextColor(c.r, c.g, c.b, c.a)
         fs:SetText("-")
     else
-        -- Kein Buff-Zauber (oder noch nie als Buff erkannt) → nichts anzeigen.
+        -- Not a buff spell (or never seen as a buff) → show nothing.
         btn.SUB_buffExpiry = nil
         fs:SetText("")
     end
