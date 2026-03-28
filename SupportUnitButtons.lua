@@ -87,31 +87,30 @@ local function BuildDispelNameTypes()
         local info = CE.Spell.GetSpellInfo(id)
         local name = info and info.name
         if name then
-            if not dispelNameTypes[name] then
-                local t = {}
-                for k, v in pairs(types) do t[k] = v end
-                dispelNameTypes[name] = t
-            else
-                for k, v in pairs(types) do dispelNameTypes[name][k] = v end
-            end
+            local t = dispelNameTypes[name] or {}
+            for k, v in pairs(types) do t[k] = v end
+            dispelNameTypes[name] = t
         end
     end
 end
 
+-- Resolves `action` (spell ID or name string) to its dispel-type table, or nil.
+-- Tries a direct ID lookup first; falls back to the name map for multi-rank
+-- Classic spells where only the base rank ID may be in DISPEL_ID_TYPES.
+local function GetDispelTypesByAction(action)
+    local id = tonumber(action)
+    if id and DISPEL_ID_TYPES[id] then return DISPEL_ID_TYPES[id] end
+    local info = CE.Spell.GetSpellInfo(id or action)
+    return info and dispelNameTypes[info.name]
+end
 
 -- Returns the dispel-type table for the spell on `btn`, or nil.
+-- Guards against non-spell buttons and missing actions before delegating.
 local function GetButtonDispelTypes(btn)
     if btn._state_type ~= "spell" then return nil end
     local action = btn._state_action
     if not action then return nil end
-    local id = tonumber(action)
-    -- 1) Direct ID hit (fastest, exact)
-    if id and DISPEL_ID_TYPES[id] then return DISPEL_ID_TYPES[id] end
-    -- 2) Name-based fallback: works for any rank of a multi-rank Classic spell
-    local info = CE.Spell.GetSpellInfo(id or action)
-    local name = info and info.name
-    if name then return dispelNameTypes[name] end
-    return nil
+    return GetDispelTypesByAction(action)
 end
 
 -- Returns (or lazily creates) the dispel-alert overlay for `btn`.
@@ -180,19 +179,21 @@ local function GetPreviewDispelType(types)
     return nil
 end
 
--- Scans harmful auras on unit and returns the first dispellable debuff type.
-local function GetUnitDispelType(unit, types)
-    if not unit or not CE.Unit.UnitExists(unit) then
-        return nil
-    end
+-- Iterates up to 40 harmful auras on `unit` and returns the debuff type of the
+-- first one whose type is present in `types`, or nil if none matches.
+local function FindDispellableAura(unit, types)
     for i = 1, 40 do
         local name, _, _, debuffType = CE.Unit.UnitAura(unit, i, "HARMFUL")
         if not name then break end
-        if debuffType and types[debuffType] then
-            return debuffType
-        end
+        if debuffType and types[debuffType] then return debuffType end
     end
-    return nil
+end
+
+-- Returns the first dispellable debuff type on `unit` given the spell's `types`
+-- table, or nil if the unit doesn't exist or has no matching debuff.
+local function GetUnitDispelType(unit, types)
+    if not unit or not CE.Unit.UnitExists(unit) then return nil end
+    return FindDispellableAura(unit, types)
 end
 
 -- Anchors and layers the dispel overlay relative to the button with padding.
@@ -305,26 +306,28 @@ function SUB:UpdateDispelHighlight(btn)
     ConfigureDispelOverlay(self, btn, ov, foundType)
 end
 
--- Update all buttons on one bar.
--- Returns true if at least one button found a debuff that can be dispelled.
+-- Updates dispel highlights for all buttons in `buttons` and returns true if
+-- any overlay is currently shown.
+local function UpdateButtonListAndCheckActive(self, buttons)
+    local anyActive = false
+    for _, btn in ipairs(buttons) do
+        self:UpdateDispelHighlight(btn)
+        if btn.SUB_dispelOverlay and btn.SUB_dispelOverlay:IsShown() then
+            anyActive = true
+        end
+    end
+    return anyActive
+end
+
+-- Refreshes dispel highlights for all buttons on `unit`'s bar and updates
+-- dispelActiveUnits accordingly.  Returns true if any overlay is shown.
 function SUB:UpdateDispelHighlightsForUnit(unit)
     local bd = self.bars[unit]
     if not bd then return end
-    local anyActive = false
-    for _, btn in ipairs(bd.sharedButtons) do
-        self:UpdateDispelHighlight(btn)
-        if btn.SUB_dispelOverlay and btn.SUB_dispelOverlay:IsShown() then
-            anyActive = true
-        end
-    end
-    for _, btn in ipairs(bd.individualButtons) do
-        self:UpdateDispelHighlight(btn)
-        if btn.SUB_dispelOverlay and btn.SUB_dispelOverlay:IsShown() then
-            anyActive = true
-        end
-    end
-    self.dispelActiveUnits[unit] = anyActive
-    return anyActive
+    local a = UpdateButtonListAndCheckActive(self, bd.sharedButtons)
+    local b = UpdateButtonListAndCheckActive(self, bd.individualButtons)
+    self.dispelActiveUnits[unit] = a or b
+    return a or b
 end
 
 -- Update every button on every bar.
@@ -335,7 +338,7 @@ function SUB:UpdateAllDispelHighlights()
 end
 
 -- Called when a unit's auras change.
-function SUB:OnUnitAura(_, unit)
+function SUB:OnUnitAura(event, unit)
     if self.db.profile.dispelAlert then
         local wasActive = self.dispelActiveUnits[unit]
         self:UpdateDispelHighlightsForUnit(unit)
@@ -361,7 +364,7 @@ function SUB:PlayDispelAlertSound()
 end
 
 -- Called when the player's mana changes; refreshes all cast-count labels.
-function SUB:OnPlayerPowerUpdate(_, unit, powerType)
+function SUB:OnPlayerPowerUpdate(event, unit, powerType)
     -- UNIT_POWER_UPDATE fires for every unit/power; only care about player mana.
     -- powerType is a number (0 = mana) in Retail/Cata+, or a string ("MANA") in Classic Era.
     -- UNIT_MANA (Classic) fires without powerType at all → powerType = nil, always passes.
@@ -621,20 +624,20 @@ local function AttachBuffStatusText(btn)
     btn.SUB_buffStatusText = fs
 end
 
--- Returns how many times the player can cast the spell before going OOM,
--- or the total item count in bags.  Returns nil when not applicable.
--- Returns mana cost for a spell ID, reading only mana-type power entries.
+-- Searches `costTable` for a mana entry (type == 0) and returns its cost, or nil.
+local function FindManaCostEntry(costTable)
+    for _, entry in ipairs(costTable) do
+        if entry.type == 0 then return entry.cost end
+    end
+end
+
+-- Returns the mana cost of `spellId`, or nil if unavailable or non-mana.
 local function GetSpellManaCost(spellId)
     local getCost = CE.Spell.GetSpellPowerCost
     if not getCost then return nil end
     local costTable = getCost(spellId)
     if not costTable then return nil end
-    for _, entry in ipairs(costTable) do
-        if entry.type == 0 then
-            return entry.cost
-        end
-    end
-    return nil
+    return FindManaCostEntry(costTable)
 end
 
 -- Returns how often the spell can be cast with current mana, or nil.
@@ -982,14 +985,17 @@ function SUB:SetDragModifier(mod)
     end
 end
 
--- Returns whether the configured drag-off modifier key is currently held.
+local DRAG_MODIFIER_CHECK = {
+    ANY   = function() return CE.Input.IsShiftKeyDown() or CE.Input.IsControlKeyDown() or CE.Input.IsAltKeyDown() end,
+    SHIFT = function() return CE.Input.IsShiftKeyDown() end,
+    CTRL  = function() return CE.Input.IsControlKeyDown() end,
+    ALT   = function() return CE.Input.IsAltKeyDown() end,
+}
+
+-- Returns true if the configured drag modifier key is currently held.
 function SUB:IsDragModifierHeld()
-    local mod = self.db.profile.dragOffModifier
-    if mod == "ANY" then return CE.Input.IsShiftKeyDown() or CE.Input.IsControlKeyDown() or CE.Input.IsAltKeyDown() end
-    if mod == "SHIFT" then return CE.Input.IsShiftKeyDown() end
-    if mod == "CTRL" then return CE.Input.IsControlKeyDown() end
-    if mod == "ALT" then return CE.Input.IsAltKeyDown() end
-    return false
+    local check = DRAG_MODIFIER_CHECK[self.db.profile.dragOffModifier]
+    return check and check() or false
 end
 
 -- Restore a button's previous content without triggering another callback loop.
@@ -1047,24 +1053,29 @@ local function HandleIndividualButtonChange(sub, btn, unit, index, btnType, acti
     sub:ApplyButtonState(btn, btnType, action)
 end
 
--- Handles LAB content-change callbacks and stores shared/individual slot state.
-function SUB:OnButtonContentsChanged(event, btn, state, btnType, action)
-    if self.syncing then return end
+local SECTION_HANDLER = {
+    shared     = HandleSharedButtonChange,
+    individual = HandleIndividualButtonChange,
+}
+
+-- Returns unit, section, index for `btn`, or nil if any is missing.
+local function GetButtonContext(btn)
     local unit    = btn.SUB_unit
     local section = btn.SUB_section
     local index   = btn.SUB_index
-    if not unit or not section or not index then return end
-    if tostring(state) ~= "0" then return end
+    if not unit or not section or not index then return nil end
+    return unit, section, index
+end
 
-    local isEmpty = IsEmptyButtonState(btnType, action)
-
-    if section == "shared" then
-        HandleSharedButtonChange(self, btn, unit, index, btnType, action, isEmpty)
-        return
-    end
-
-    if section == "individual" then
-        HandleIndividualButtonChange(self, btn, unit, index, btnType, action, isEmpty)
+-- Handles LAB content-change callbacks and dispatches to the appropriate
+-- section handler based on btn.SUB_section.
+function SUB:OnButtonContentsChanged(event, btn, state, btnType, action)
+    if self.syncing or tostring(state) ~= "0" then return end
+    local unit, section, index = GetButtonContext(btn)
+    if not unit then return end
+    local handler = SECTION_HANDLER[section]
+    if handler then
+        handler(self, btn, unit, index, btnType, action, IsEmptyButtonState(btnType, action))
     end
 end
 
@@ -1213,11 +1224,8 @@ end
 -- Populated at runtime; only then do we show "-" when the buff is currently inactive.
 local knownBuffSpells = {}
 
--- Searches a unit's buffs for a player-cast buff with the given spell name.
--- Returns (expirationTime, duration), or nil.
--- Marks the spell name as a known buff spell once found.
-local function FindPlayerBuffOnUnit(unit, spellName)
-    if not unit or not CE.Unit.UnitExists(unit) then return nil end
+-- Scans helpful auras on `unit` for a player-cast buff matching `spellName`.
+local function ScanPlayerBuff(unit, spellName)
     for i = 1, 40 do
         local name, _, _, _, duration, expirationTime, source = CE.Unit.UnitAura(unit, i, "HELPFUL")
         if not name then break end
@@ -1226,7 +1234,12 @@ local function FindPlayerBuffOnUnit(unit, spellName)
             return expirationTime, duration
         end
     end
-    return nil
+end
+
+-- Returns (expirationTime, duration) of `spellName` on `unit`, or nil.
+local function FindPlayerBuffOnUnit(unit, spellName)
+    if not unit or not CE.Unit.UnitExists(unit) then return nil end
+    return ScanPlayerBuff(unit, spellName)
 end
 
 local BUFF_TIME_FORMATS = {
@@ -1315,20 +1328,22 @@ local function UpdateBuffStatusDisplayForSpell(btn, fs, db, spellName)
 end
 
 -- Updates one button's buff-status indicator text and color.
+-- Returns the spell name to display buff status for, or nil if the feature is
+-- disabled, the button is empty, or no spell name can be resolved.
+local function GetBuffSpellForButton(btn, db)
+    if not db or not db.showBuffStatus then return nil end
+    local btnType = btn._state_type
+    if not btnType or btnType == "empty" then return nil end
+    return GetButtonSpellName(btn)
+end
+
+-- Refreshes the buff-status text overlay on `btn`.  Clears it when no
+-- applicable spell is found; otherwise delegates to the display helpers.
 function SUB:UpdateButtonBuffStatus(btn)
     local fs = btn.SUB_buffStatusText
     if not fs then return end
     local db = self.db and self.db.profile
-    if not db or not db.showBuffStatus then
-        fs:SetText("")
-        return
-    end
-    local btnType = btn._state_type
-    if not btnType or btnType == "empty" then
-        fs:SetText("")
-        return
-    end
-    local spellName = GetButtonSpellName(btn)
+    local spellName = GetBuffSpellForButton(btn, db)
     if not spellName then
         fs:SetText("")
         return
@@ -1364,28 +1379,34 @@ function SUB:UpdateBuffStatusesForUnit(unit)
     end
 end
 
--- Applies a button action state and updates all visual overlays/texts.
-function SUB:ApplyButtonState(btn, btnType, action)
-    if not btnType or btnType == "empty" or not action then
-        if btn.SUB_rankText then btn.SUB_rankText:SetText("") end
-        if btn.SUB_castCountText then btn.SUB_castCountText:SetText("") end
-        if btn.SUB_buffStatusText then btn.SUB_buffStatusText:SetText("") end
-        btn:SetAttribute("SUB_macro", nil)
-        self:UpdateDispelHighlight(btn) -- clear overlay when slot becomes empty
-        return
-    end
-    if CE.Combat.InCombatLockdown() then return end
+-- Clears all text overlays and metadata when a button slot becomes empty.
+local function ClearButtonState(self, btn)
+    if btn.SUB_rankText then btn.SUB_rankText:SetText("") end
+    if btn.SUB_castCountText then btn.SUB_castCountText:SetText("") end
+    if btn.SUB_buffStatusText then btn.SUB_buffStatusText:SetText("") end
+    btn:SetAttribute("SUB_macro", nil)
+    self:UpdateDispelHighlight(btn)
+end
 
-    local unit = btn.SUB_unit
+-- Assigns the unit-targeted macro attribute for spell/item buttons, or clears it.
+-- The PreClick/PostClick WrapScript swaps to this macro for execution, then
+-- restores the original type so LAB keeps showing icon/cooldown/tooltip correctly.
+local function ApplyMacroAttribute(btn, unit, btnType, action)
     if unit and (btnType == "spell" or btnType == "item") then
-        -- Store the unit-targeted macro on the button as an attribute.
-        -- The PreClick/PostClick WrapScript will swap to this macro for execution,
-        -- then restore the original type so LAB keeps showing icon/cooldown correctly.
         btn:SetAttribute("SUB_macro", BuildMacroText(unit, btnType, action))
     else
         btn:SetAttribute("SUB_macro", nil)
     end
+end
 
+-- Updates all visual state and attributes for a button with a live action.
+function SUB:ApplyButtonState(btn, btnType, action)
+    if not btnType or btnType == "empty" or not action then
+        ClearButtonState(self, btn)
+        return
+    end
+    if CE.Combat.InCombatLockdown() then return end
+    ApplyMacroAttribute(btn, btn.SUB_unit, btnType, action)
     -- Always use the native type so LAB can resolve icon, cooldown, tooltip.
     btn:SetState(nil, btnType, action)
     self:UpdateButtonRankText(btn, btnType, action)
@@ -1434,21 +1455,25 @@ function SUB:RefreshIndividualButtons(unit)
     self.syncing = false
 end
 
--- Called when SPELLS_CHANGED fires (cache populated after login).
--- Re-builds SUB_macro on every button so unit-targeting works correctly.
+-- Applies stored slot state to all shared buttons on `bd`.
+local function ApplySharedSlots(self, bd, sharedSlots)
+    for i = 1, MAX_SHARED do
+        local slot = sharedSlots[i]
+        if slot and slot.btnType then
+            self:ApplyButtonState(bd.sharedButtons[i], slot.btnType, slot.action)
+        end
+    end
+end
+
+-- Reapplies all stored button states across every unit bar.
+-- Also refreshes the dispel name map now that the full spell cache is available.
 function SUB:ApplyAllButtonStates()
     if CE.Combat.InCombatLockdown() then return end
-    -- Refresh the dispel name map now that the full spell cache is available.
     BuildDispelNameTypes()
     for _, unit in ipairs(UNITS) do
         local bd = self.bars[unit]
         if not bd then break end
-        for i = 1, MAX_SHARED do
-            local slot = self.db.char.sharedSlots[i]
-            if slot and slot.btnType then
-                self:ApplyButtonState(bd.sharedButtons[i], slot.btnType, slot.action)
-            end
-        end
+        ApplySharedSlots(self, bd, self.db.char.sharedSlots)
         if unit ~= "player" then
             self:RefreshIndividualButtons(unit)
         end
@@ -1481,7 +1506,7 @@ end
 -- Fired when a unit's name becomes available (may arrive after GROUP_ROSTER_UPDATE).
 -- Refreshes the individual buttons for that party slot so the per-character
 -- assignment is applied even if UnitName() returned nil on the first try.
-function SUB:OnUnitNameUpdate(_, unit)
+function SUB:OnUnitNameUpdate(event, unit)
     if not unit or not UNIT_INDEX[unit] or unit == "player" then return end
     local barData = self.bars[unit]
     if not barData or not barData.frame:IsShown() then return end
@@ -1505,27 +1530,26 @@ local function RefreshVisibleBarState(sub, unit)
 end
 
 -- Updates bar visibility and dependent state for current group roster.
+-- Shows/hides `unit`'s bar and refreshes its state if visible.
+local function UpdateBarVisibility(self, unit)
+    local show = ShouldShowBarForUnit(self, unit)
+    self.bars[unit].frame:SetShown(show)
+    if show then RefreshVisibleBarState(self, unit) end
+end
+
+-- Refreshes bar visibility for all units.
+-- Protected frames cannot call SetShown during combat lockdown, so updates
+-- are deferred via rosterDirty until combat ends.
 function SUB:OnRosterUpdate()
-    -- Protected frames (those with secure children) cannot have SetShown called
-    -- during combat lockdown. Defer the visibility update until combat ends.
     if CE.Combat.InCombatLockdown() then
         self.rosterDirty = true
         return
     end
-
     for _, unit in ipairs(UNITS) do
         local barData = self.bars[unit]
         if not barData then break end
-
-        local show = ShouldShowBarForUnit(self, unit)
-
-        barData.frame:SetShown(show)
-
-        if show then
-            RefreshVisibleBarState(self, unit)
-        end
+        UpdateBarVisibility(self, unit)
     end
-
     if self.db.profile.positionMode == "anchored" then
         self:ApplyAnchoredPositions()
     end
@@ -1576,27 +1600,25 @@ function SUB:ApplyAnchoredPositions()
 end
 
 -- Restores one bar position from saved coordinates or default stack.
+-- Positions `frame` from saved coordinates, or falls back to default stacking.
+local function SetBarPosition(frame, unit, saved, db)
+    frame:ClearAllPoints()
+    if saved.x and saved.y then
+        frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", saved.x, saved.y)
+    else
+        local uIdx = UNIT_INDEX[unit] or 0
+        frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT",
+            10, -100 - uIdx * (db.buttonSize + HANDLE_HEIGHT + 6))
+    end
+end
+
+-- Restores `unit`'s bar to its saved position, or skips if anchored mode is active.
 function SUB:RestoreBarPosition(unit)
     local db      = self.db.profile
     local barData = self.bars[unit]
     if not barData then return end
-
-    if db.positionMode == "anchored" then
-        -- will be handled by ApplyAnchoredPositions after all bars are created
-        return
-    end
-
-    local saved = db.bars[unit]
-    barData.frame:ClearAllPoints()
-
-    if saved.x and saved.y then
-        barData.frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", saved.x, saved.y)
-    else
-        -- default stacking
-        local uIdx = UNIT_INDEX[unit] or 0
-        barData.frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT",
-            10, -100 - uIdx * (db.buttonSize + HANDLE_HEIGHT + 6))
-    end
+    if db.positionMode == "anchored" then return end
+    SetBarPosition(barData.frame, unit, db.bars[unit], db)
 end
 
 -- Resets all saved bar positions and reapplies active positioning mode.
