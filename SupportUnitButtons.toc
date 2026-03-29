@@ -4,7 +4,7 @@
 ## Notes: Dedicated action bar for each party member
 ## Author: chr1st0ph3rGG
 ## SavedVariables: SupportUnitButtonsDB
-## OptionalDeps: Masque
+## OptionalDeps: Masque, ShadowedUnitFrames
 
 Libs\LibStub\LibStub.lua
 Libs\C_Everywhere\C_Everywhere.lua

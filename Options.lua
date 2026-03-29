@@ -15,6 +15,11 @@ local UNITS          = { "player", "party1", "party2", "party3", "party4" }
 local MAX_SHARED     = 12
 local MAX_INDIVIDUAL = 6
 
+local function IsSUFInstalled()
+    local fn = (C_AddOns and C_AddOns.IsAddOnLoaded) or _G["IsAddOnLoaded"]
+    return fn ~= nil and fn("ShadowedUnitFrames") == true
+end
+
 -------------------------------------------------------------------------------
 -- Options
 -------------------------------------------------------------------------------
@@ -202,15 +207,30 @@ function SUB:BuildOptionsTable()
                             },
                             positionMode = {
                                 name   = L["Mode"],
-                                desc   = L["Free: drag each bar individually.\nAnchored: all bars move as a group."],
+                                desc   = function()
+                                    local s = L["Free: drag each bar individually.\nAnchored: all bars move as a group."]
+                                    if IsSUFInstalled() then
+                                        s = s .. "\n" .. L["ShadowedUnitFrames: anchor each bar next to a SUF party frame."]
+                                    end
+                                    return s
+                                end,
                                 type   = "select",
                                 order  = 1,
-                                values = { free = L["Free"], anchored = L["Anchored"] },
+                                values = function()
+                                    local vals = { free = L["Free"], anchored = L["Anchored"] }
+                                    if IsSUFInstalled() then
+                                        vals.suf = L["ShadowedUnitFrames"]
+                                    end
+                                    return vals
+                                end,
                                 get    = function() return self.db.profile.positionMode end,
                                 set    = function(_, v)
                                     self.db.profile.positionMode = v
+                                    self:UpdateAllHandleInteractivity()
                                     if v == "anchored" then
                                         self:ApplyAnchoredPositions()
+                                    elseif v == "suf" then
+                                        self:ApplySUFPositions()
                                     else
                                         for _, unit in ipairs(UNITS) do
                                             self:RestoreBarPosition(unit)
@@ -218,38 +238,146 @@ function SUB:BuildOptionsTable()
                                     end
                                 end,
                             },
-                            anchorDirection = {
-                                name     = L["Direction"],
-                                type     = "select",
-                                order    = 2,
-                                values   = { vertical = L["Vertical"], horizontal = L["Horizontal"] },
-                                disabled = function() return self.db.profile.positionMode ~= "anchored" end,
-                                get      = function() return self.db.profile.anchorDirection end,
-                                set      = function(_, v)
-                                    self.db.profile.anchorDirection = v
-                                    self:ApplyAnchoredPositions()
-                                end,
+                            ---------- Free options ----------
+                            freePositioning = {
+                                name   = L["Free"],
+                                type   = "group",
+                                inline = true,
+                                order  = 2,
+                                hidden = function() return self.db.profile.positionMode ~= "free" end,
+                                args   = {
+                                    resetPos = {
+                                        name  = L["Reset positions"],
+                                        type  = "execute",
+                                        order = 1,
+                                        func  = function() self:ResetAllPositions() end,
+                                    },
+                                },
                             },
-                            anchorGap = {
-                                name     = L["Gap between bars"],
-                                desc     = L["Pixels between bars in anchored mode"],
-                                type     = "range",
-                                min      = 0,
-                                max      = 256,
-                                step     = 1,
-                                order    = 3,
-                                disabled = function() return self.db.profile.positionMode ~= "anchored" end,
-                                get      = function() return self.db.profile.anchorGap end,
-                                set      = function(_, v)
-                                    self.db.profile.anchorGap = v
-                                    self:ApplyAnchoredPositions()
-                                end,
+
+                            ---------- Anchored options ----------
+                            anchorPositioning = {
+                                name   = L["Anchored"],
+                                type   = "group",
+                                inline = true,
+                                order  = 3,
+                                hidden = function() return self.db.profile.positionMode ~= "anchored" end,
+                                args   = {
+                                    anchorDirection = {
+                                        name   = L["Direction"],
+                                        type   = "select",
+                                        order  = 1,
+                                        values = { vertical = L["Vertical"], horizontal = L["Horizontal"] },
+                                        get    = function() return self.db.profile.anchorDirection end,
+                                        set    = function(_, v)
+                                            self.db.profile.anchorDirection = v
+                                            self:ApplyAnchoredPositions()
+                                        end,
+                                    },
+                                    anchorGap = {
+                                        name  = L["Gap between bars"],
+                                        desc  = L["Pixels between bars in anchored mode"],
+                                        type  = "range",
+                                        min   = 0,
+                                        max   = 256,
+                                        step  = 1,
+                                        order = 2,
+                                        get   = function() return self.db.profile.anchorGap end,
+                                        set   = function(_, v)
+                                            self.db.profile.anchorGap = v
+                                            self:ApplyAnchoredPositions()
+                                        end,
+                                    },
+                                    resetPos = {
+                                        name  = L["Reset positions"],
+                                        type  = "execute",
+                                        order = 3,
+                                        func  = function() self:ResetAllPositions() end,
+                                    },
+                                },
                             },
-                            resetPos = {
-                                name  = L["Reset positions"],
-                                type  = "execute",
-                                order = 5,
-                                func  = function() self:ResetAllPositions() end,
+
+                            ---------- ShadowedUnitFrames anchor ----------
+                            sufPositioning = {
+                                name     = L["ShadowedUnitFrames Anchor"],
+                                type     = "group",
+                                inline   = true,
+                                order    = 4,
+                                hidden   = function() return not IsSUFInstalled() or self.db.profile.positionMode ~= "suf" end,
+                                args     = {
+                                    sufAnchorSelf = {
+                                        name   = L["Bar anchor point"],
+                                        desc   = L["Which point of the SUB bar to anchor from"],
+                                        type   = "select",
+                                        order  = 1,
+                                        values = {
+                                            TOPLEFT     = L["Top left"],
+                                            TOP         = L["Top"],
+                                            TOPRIGHT    = L["Top right"],
+                                            LEFT        = L["Left"],
+                                            RIGHT       = L["Right"],
+                                            BOTTOMLEFT  = L["Bottom left"],
+                                            BOTTOM      = L["Bottom"],
+                                            BOTTOMRIGHT = L["Bottom right"],
+                                        },
+                                        get    = function() return self.db.profile.sufAnchorSelf or "LEFT" end,
+                                        set    = function(_, v)
+                                            self.db.profile.sufAnchorSelf = v
+                                            self:ApplySUFPositions()
+                                        end,
+                                    },
+                                    sufAnchorTarget = {
+                                        name   = L["SUF anchor point"],
+                                        desc   = L["Which point of the SUF frame to attach to"],
+                                        type   = "select",
+                                        order  = 2,
+                                        values = {
+                                            TOPLEFT     = L["Top left"],
+                                            TOP         = L["Top"],
+                                            TOPRIGHT    = L["Top right"],
+                                            LEFT        = L["Left"],
+                                            RIGHT       = L["Right"],
+                                            BOTTOMLEFT  = L["Bottom left"],
+                                            BOTTOM      = L["Bottom"],
+                                            BOTTOMRIGHT = L["Bottom right"],
+                                        },
+                                        get    = function() return self.db.profile.sufAnchorTarget or "RIGHT" end,
+                                        set    = function(_, v)
+                                            self.db.profile.sufAnchorTarget = v
+                                            self:ApplySUFPositions()
+                                        end,
+                                    },
+                                    sufOffsetX = {
+                                        name  = L["Offset X"],
+                                        desc  = L["Horizontal offset from the SUF anchor point (pixels)"],
+                                        type  = "range",
+                                        order = 3,
+                                        width = "half",
+                                        min   = -500,
+                                        max   = 500,
+                                        step  = 1,
+                                        get   = function() return self.db.profile.sufOffsetX or 0 end,
+                                        set   = function(_, v)
+                                            self.db.profile.sufOffsetX = v
+                                            self:ApplySUFPositions()
+                                        end,
+                                    },
+                                    sufOffsetY = {
+                                        name  = L["Offset Y"],
+                                        desc  = L["Vertical offset from the SUF anchor point (pixels)"],
+                                        type  = "range",
+                                        order = 4,
+                                        width = "half",
+                                        min   = -500,
+                                        max   = 500,
+                                        step  = 1,
+                                        get   = function() return self.db.profile.sufOffsetY or 0 end,
+                                        set   = function(_, v)
+                                            self.db.profile.sufOffsetY = v
+                                            self:ApplySUFPositions()
+                                        end,
+                                    },
+                                },
                             },
                         },
                     },
@@ -294,7 +422,7 @@ function SUB:BuildOptionsTable()
 
             ---------- Spell tab ----------
             spell = {
-                name  = L["Spell"],
+                name  = L["Button Overlays"],
                 type  = "group",
                 order = 2,
                 args  = {
@@ -389,6 +517,7 @@ function SUB:BuildOptionsTable()
                                 max      = 20,
                                 step     = 1,
                                 order    = 6,
+                                width    = "half",
                                 disabled = function() return not self.db.profile.showSpellRank end,
                                 get      = function() return self.db.profile.spellRankOffsetX end,
                                 set      = function(_, v)
@@ -404,6 +533,7 @@ function SUB:BuildOptionsTable()
                                 max      = 20,
                                 step     = 1,
                                 order    = 7,
+                                width    = "half",
                                 disabled = function() return not self.db.profile.showSpellRank end,
                                 get      = function() return self.db.profile.spellRankOffsetY end,
                                 set      = function(_, v)
@@ -411,21 +541,29 @@ function SUB:BuildOptionsTable()
                                     self:UpdateAllRankTexts()
                                 end,
                             },
-                            spellRankColor = {
-                                name     = L["Color"],
-                                type     = "color",
-                                hasAlpha = true,
-                                order    = 8,
+                            spellRankColors = {
+                                name     = L["Colors"],
+                                type     = "group",
+                                inline   = true,
+                                order    = 9,
                                 disabled = function() return not self.db.profile.showSpellRank end,
-                                get      = function()
-                                    local c = self.db.profile.spellRankColor
-                                    return c.r, c.g, c.b, c.a
-                                end,
-                                set      = function(_, r, g, b, a)
-                                    local c = self.db.profile.spellRankColor
-                                    c.r, c.g, c.b, c.a = r, g, b, a
-                                    self:UpdateAllRankTexts()
-                                end,
+                                args     = {
+                                    spellRankColor = {
+                                        name     = L["Spell Rank Color"],
+                                        type     = "color",
+                                        hasAlpha = true,
+                                        order    = 1,
+                                        get      = function()
+                                            local c = self.db.profile.spellRankColor
+                                            return c.r, c.g, c.b, c.a
+                                        end,
+                                        set      = function(_, r, g, b, a)
+                                            local c = self.db.profile.spellRankColor
+                                            c.r, c.g, c.b, c.a = r, g, b, a
+                                            self:UpdateAllRankTexts()
+                                        end,
+                                    },
+                                },
                             },
                         },
                     },
@@ -521,6 +659,7 @@ function SUB:BuildOptionsTable()
                                 max      = 20,
                                 step     = 1,
                                 order    = 6,
+                                width    = "half",
                                 disabled = function() return not self.db.profile.showCastCount end,
                                 get      = function() return self.db.profile.castCountOffsetX end,
                                 set      = function(_, v)
@@ -535,6 +674,7 @@ function SUB:BuildOptionsTable()
                                 max      = 20,
                                 step     = 1,
                                 order    = 7,
+                                width    = "half",
                                 disabled = function() return not self.db.profile.showCastCount end,
                                 get      = function() return self.db.profile.castCountOffsetY end,
                                 set      = function(_, v)
@@ -542,39 +682,46 @@ function SUB:BuildOptionsTable()
                                     self:UpdateAllCastCounts()
                                 end,
                             },
-                            castCountSpellColor = {
-                                name     = L["Spell Color"],
-                                desc     = L["Color of the cast count number for spells"],
-                                type     = "color",
-                                hasAlpha = true,
-                                order    = 8,
+                            castCountColors = {
+                                name     = L["Colors"],
+                                type     = "group",
+                                inline   = true,
+                                order    = 10,
                                 disabled = function() return not self.db.profile.showCastCount end,
-                                get      = function()
-                                    local c = self.db.profile.castCountSpellColor
-                                    return c.r, c.g, c.b, c.a
-                                end,
-                                set      = function(_, r, g, b, a)
-                                    local c = self.db.profile.castCountSpellColor
-                                    c.r, c.g, c.b, c.a = r, g, b, a
-                                    self:UpdateAllCastCounts()
-                                end,
-                            },
-                            castCountItemColor = {
-                                name     = L["Item Color"],
-                                desc     = L["Color of the cast count number for items"],
-                                type     = "color",
-                                hasAlpha = true,
-                                order    = 9,
-                                disabled = function() return not self.db.profile.showCastCount end,
-                                get      = function()
-                                    local c = self.db.profile.castCountItemColor
-                                    return c.r, c.g, c.b, c.a
-                                end,
-                                set      = function(_, r, g, b, a)
-                                    local c = self.db.profile.castCountItemColor
-                                    c.r, c.g, c.b, c.a = r, g, b, a
-                                    self:UpdateAllCastCounts()
-                                end,
+                                args     = {
+                                    castCountSpellColor = {
+                                        name     = L["Spell Color"],
+                                        desc     = L["Color of the cast count number for spells"],
+                                        type     = "color",
+                                        hasAlpha = true,
+                                        order    = 1,
+                                        get      = function()
+                                            local c = self.db.profile.castCountSpellColor
+                                            return c.r, c.g, c.b, c.a
+                                        end,
+                                        set      = function(_, r, g, b, a)
+                                            local c = self.db.profile.castCountSpellColor
+                                            c.r, c.g, c.b, c.a = r, g, b, a
+                                            self:UpdateAllCastCounts()
+                                        end,
+                                    },
+                                    castCountItemColor = {
+                                        name     = L["Item Color"],
+                                        desc     = L["Color of the cast count number for items"],
+                                        type     = "color",
+                                        hasAlpha = true,
+                                        order    = 2,
+                                        get      = function()
+                                            local c = self.db.profile.castCountItemColor
+                                            return c.r, c.g, c.b, c.a
+                                        end,
+                                        set      = function(_, r, g, b, a)
+                                            local c = self.db.profile.castCountItemColor
+                                            c.r, c.g, c.b, c.a = r, g, b, a
+                                            self:UpdateAllCastCounts()
+                                        end,
+                                    },
+                                },
                             },
                         },
                     },
@@ -669,6 +816,7 @@ function SUB:BuildOptionsTable()
                                 max      = 20,
                                 step     = 1,
                                 order    = 6,
+                                width    = "half",
                                 disabled = function() return not self.db.profile.showReagentCount end,
                                 get      = function() return self.db.profile.reagentCountOffsetX end,
                                 set      = function(_, v)
@@ -683,6 +831,7 @@ function SUB:BuildOptionsTable()
                                 max      = 20,
                                 step     = 1,
                                 order    = 7,
+                                width    = "half",
                                 disabled = function() return not self.db.profile.showReagentCount end,
                                 get      = function() return self.db.profile.reagentCountOffsetY end,
                                 set      = function(_, v)
@@ -690,21 +839,29 @@ function SUB:BuildOptionsTable()
                                     self:UpdateAllReagentCounts()
                                 end,
                             },
-                            reagentCountColor = {
-                                name     = L["Color"],
-                                type     = "color",
-                                hasAlpha = true,
-                                order    = 8,
+                            reagentCountColors = {
+                                name     = L["Colors"],
+                                type     = "group",
+                                inline   = true,
+                                order    = 9,
                                 disabled = function() return not self.db.profile.showReagentCount end,
-                                get      = function()
-                                    local c = self.db.profile.reagentCountColor
-                                    return c.r, c.g, c.b, c.a
-                                end,
-                                set      = function(_, r, g, b, a)
-                                    local c = self.db.profile.reagentCountColor
-                                    c.r, c.g, c.b, c.a = r, g, b, a
-                                    self:UpdateAllReagentCounts()
-                                end,
+                                args     = {
+                                    reagentCountColor = {
+                                        name     = L["Reagent Count Color"],
+                                        type     = "color",
+                                        hasAlpha = true,
+                                        order    = 1,
+                                        get      = function()
+                                            local c = self.db.profile.reagentCountColor
+                                            return c.r, c.g, c.b, c.a
+                                        end,
+                                        set      = function(_, r, g, b, a)
+                                            local c = self.db.profile.reagentCountColor
+                                            c.r, c.g, c.b, c.a = r, g, b, a
+                                            self:UpdateAllReagentCounts()
+                                        end,
+                                    },
+                                },
                             },
                         },
                     },
@@ -803,6 +960,7 @@ function SUB:BuildOptionsTable()
                                 max      = 20,
                                 step     = 1,
                                 order    = 6,
+                                width    = "half",
                                 disabled = function() return not self.db.profile.showBuffStatus end,
                                 get      = function() return self.db.profile.buffStatusOffsetX end,
                                 set      = function(_, v)
@@ -817,26 +975,11 @@ function SUB:BuildOptionsTable()
                                 max      = 20,
                                 step     = 1,
                                 order    = 7,
+                                width    = "half",
                                 disabled = function() return not self.db.profile.showBuffStatus end,
                                 get      = function() return self.db.profile.buffStatusOffsetY end,
                                 set      = function(_, v)
                                     self.db.profile.buffStatusOffsetY = v
-                                    self:UpdateAllBuffStatuses()
-                                end,
-                            },
-                            buffStatusColor = {
-                                name     = L["Color"],
-                                type     = "color",
-                                hasAlpha = true,
-                                order    = 8,
-                                disabled = function() return not self.db.profile.showBuffStatus end,
-                                get      = function()
-                                    local c = self.db.profile.buffStatusColor
-                                    return c.r, c.g, c.b, c.a
-                                end,
-                                set      = function(_, r, g, b, a)
-                                    local c = self.db.profile.buffStatusColor
-                                    c.r, c.g, c.b, c.a = r, g, b, a
                                     self:UpdateAllBuffStatuses()
                                 end,
                             },
@@ -855,21 +998,44 @@ function SUB:BuildOptionsTable()
                                     self:UpdateAllBuffStatuses()
                                 end,
                             },
-                            buffStatusLowColor = {
-                                name     = L["Low-time color"],
-                                type     = "color",
-                                hasAlpha = true,
+                            buffStatusColors = {
+                                name     = L["Colors"],
+                                type     = "group",
+                                inline   = true,
                                 order    = 10,
                                 disabled = function() return not self.db.profile.showBuffStatus end,
-                                get      = function()
-                                    local c = self.db.profile.buffStatusLowColor
-                                    return c.r, c.g, c.b, c.a
-                                end,
-                                set      = function(_, r, g, b, a)
-                                    local c = self.db.profile.buffStatusLowColor
-                                    c.r, c.g, c.b, c.a = r, g, b, a
-                                    self:UpdateAllBuffStatuses()
-                                end,
+                                args     = {
+                                    buffStatusColor = {
+                                        name     = L["Normal Color"],
+                                        type     = "color",
+                                        hasAlpha = true,
+                                        order    = 1,
+                                        get      = function()
+                                            local c = self.db.profile.buffStatusColor
+                                            return c.r, c.g, c.b, c.a
+                                        end,
+                                        set      = function(_, r, g, b, a)
+                                            local c = self.db.profile.buffStatusColor
+                                            c.r, c.g, c.b, c.a = r, g, b, a
+                                            self:UpdateAllBuffStatuses()
+                                        end,
+                                    },
+                                    buffStatusLowColor = {
+                                        name     = L["Low-time color"],
+                                        type     = "color",
+                                        hasAlpha = true,
+                                        order    = 2,
+                                        get      = function()
+                                            local c = self.db.profile.buffStatusLowColor
+                                            return c.r, c.g, c.b, c.a
+                                        end,
+                                        set      = function(_, r, g, b, a)
+                                            local c = self.db.profile.buffStatusLowColor
+                                            c.r, c.g, c.b, c.a = r, g, b, a
+                                            self:UpdateAllBuffStatuses()
+                                        end,
+                                    },
+                                },
                             },
                         },
                     },
@@ -900,6 +1066,18 @@ function SUB:BuildOptionsTable()
                                     self:UpdateAllDispelHighlights()
                                 end,
                             },
+                            preview = {
+                                name     = L["Simulate dispel alert"],
+                                desc     = L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."],
+                                type     = "toggle",
+                                order    = 2,
+                                disabled = function() return not self.db.profile.dispelAlert end,
+                                get      = function() return SUB.dispelAlertPreview end,
+                                set      = function(_, v)
+                                    SUB.dispelAlertPreview = v
+                                    SUB:UpdateAllDispelHighlights()
+                                end,
+                            },
                         },
                     },
                     dispelColorGroup = {
@@ -909,25 +1087,11 @@ function SUB:BuildOptionsTable()
                         order    = 2,
                         disabled = function() return not self.db.profile.dispelAlert end,
                         args     = {
-                            color = {
-                                name  = L["Color"],
-                                type  = "color",
-                                order = 1,
-                                get   = function()
-                                    local c = self.db.profile.dispelAlertColor
-                                    return c.r, c.g, c.b
-                                end,
-                                set   = function(_, r, g, b)
-                                    local c = self.db.profile.dispelAlertColor
-                                    c.r, c.g, c.b = r, g, b
-                                    self:UpdateAllDispelHighlights()
-                                end,
-                            },
                             shape = {
                                 name   = L["Shape"],
                                 desc   = L["Border shape. Use Circle for round Masque button skins."],
                                 type   = "select",
-                                order  = 2,
+                                order  = 1,
                                 values = {
                                     square = L["Square"],
                                     circle = L["Circle"],
@@ -1018,117 +1182,104 @@ function SUB:BuildOptionsTable()
                                     self:UpdateAllDispelHighlights()
                                 end,
                             },
-                        },
-                    },
-                    dispelTypeColorsGroup = {
-                        name     = L["Type Colors"],
-                        type     = "group",
-                        inline   = true,
-                        order    = 3,
-                        disabled = function() return not self.db.profile.dispelAlert end,
-                        args     = {
-                            enable = {
+                            perDebuffType = {
                                 name  = L["Per debuff type"],
                                 desc  = L["Use a different color per debuff type (Magic, Curse, Poison, Disease)."],
                                 type  = "toggle",
-                                order = 1,
+                                order = 8,
                                 get   = function() return self.db.profile.dispelAlertTypeColorsEnabled end,
                                 set   = function(_, v)
                                     self.db.profile.dispelAlertTypeColorsEnabled = v
                                     self:UpdateAllDispelHighlights()
                                 end,
                             },
-                            colorMagic = {
-                                name     = L["Magic"],
-                                type     = "color",
-                                order    = 2,
-                                disabled = function()
-                                    return not self.db.profile.dispelAlert
-                                        or not self.db.profile.dispelAlertTypeColorsEnabled
-                                end,
-                                get      = function()
-                                    local c = self.db.profile.dispelAlertColorMagic
-                                    return c.r, c.g, c.b
-                                end,
-                                set      = function(_, r, g, b)
-                                    local c = self.db.profile.dispelAlertColorMagic
-                                    c.r, c.g, c.b = r, g, b
-                                    self:UpdateAllDispelHighlights()
-                                end,
+                            singleColor = {
+                                name   = L["Colors"],
+                                type   = "group",
+                                inline = true,
+                                order  = 9,
+                                hidden = function() return self.db.profile.dispelAlertTypeColorsEnabled end,
+                                args   = {
+                                    color = {
+                                        name  = L["Debuff Color"],
+                                        type  = "color",
+                                        order = 1,
+                                        get   = function()
+                                            local c = self.db.profile.dispelAlertColor
+                                            return c.r, c.g, c.b
+                                        end,
+                                        set   = function(_, r, g, b)
+                                            local c = self.db.profile.dispelAlertColor
+                                            c.r, c.g, c.b = r, g, b
+                                            self:UpdateAllDispelHighlights()
+                                        end,
+                                    },
+                                },
                             },
-                            colorCurse = {
-                                name     = L["Curse"],
-                                type     = "color",
-                                order    = 3,
-                                disabled = function()
-                                    return not self.db.profile.dispelAlert
-                                        or not self.db.profile.dispelAlertTypeColorsEnabled
-                                end,
-                                get      = function()
-                                    local c = self.db.profile.dispelAlertColorCurse
-                                    return c.r, c.g, c.b
-                                end,
-                                set      = function(_, r, g, b)
-                                    local c = self.db.profile.dispelAlertColorCurse
-                                    c.r, c.g, c.b = r, g, b
-                                    self:UpdateAllDispelHighlights()
-                                end,
-                            },
-                            colorPoison = {
-                                name     = L["Poison"],
-                                type     = "color",
-                                order    = 4,
-                                disabled = function()
-                                    return not self.db.profile.dispelAlert
-                                        or not self.db.profile.dispelAlertTypeColorsEnabled
-                                end,
-                                get      = function()
-                                    local c = self.db.profile.dispelAlertColorPoison
-                                    return c.r, c.g, c.b
-                                end,
-                                set      = function(_, r, g, b)
-                                    local c = self.db.profile.dispelAlertColorPoison
-                                    c.r, c.g, c.b = r, g, b
-                                    self:UpdateAllDispelHighlights()
-                                end,
-                            },
-                            colorDisease = {
-                                name     = L["Disease"],
-                                type     = "color",
-                                order    = 5,
-                                disabled = function()
-                                    return not self.db.profile.dispelAlert
-                                        or not self.db.profile.dispelAlertTypeColorsEnabled
-                                end,
-                                get      = function()
-                                    local c = self.db.profile.dispelAlertColorDisease
-                                    return c.r, c.g, c.b
-                                end,
-                                set      = function(_, r, g, b)
-                                    local c = self.db.profile.dispelAlertColorDisease
-                                    c.r, c.g, c.b = r, g, b
-                                    self:UpdateAllDispelHighlights()
-                                end,
-                            },
-                        },
-                    },
-                    dispelPreviewGroup = {
-                        name     = L["Preview"],
-                        type     = "group",
-                        inline   = true,
-                        order    = 4,
-                        disabled = function() return not self.db.profile.dispelAlert end,
-                        args     = {
-                            preview = {
-                                name  = L["Simulate dispel alert"],
-                                desc  = L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."],
-                                type  = "toggle",
-                                order = 1,
-                                get   = function() return SUB.dispelAlertPreview end,
-                                set   = function(_, v)
-                                    SUB.dispelAlertPreview = v
-                                    SUB:UpdateAllDispelHighlights()
-                                end,
+                            typeColors = {
+                                name   = L["Colors"],
+                                type   = "group",
+                                inline = true,
+                                order  = 9,
+                                hidden = function() return not self.db.profile.dispelAlertTypeColorsEnabled end,
+                                args   = {
+                                    colorMagic = {
+                                        name  = L["Magic"],
+                                        type  = "color",
+                                        order = 1,
+                                        get   = function()
+                                            local c = self.db.profile.dispelAlertColorMagic
+                                            return c.r, c.g, c.b
+                                        end,
+                                        set   = function(_, r, g, b)
+                                            local c = self.db.profile.dispelAlertColorMagic
+                                            c.r, c.g, c.b = r, g, b
+                                            self:UpdateAllDispelHighlights()
+                                        end,
+                                    },
+                                    colorCurse = {
+                                        name  = L["Curse"],
+                                        type  = "color",
+                                        order = 2,
+                                        get   = function()
+                                            local c = self.db.profile.dispelAlertColorCurse
+                                            return c.r, c.g, c.b
+                                        end,
+                                        set   = function(_, r, g, b)
+                                            local c = self.db.profile.dispelAlertColorCurse
+                                            c.r, c.g, c.b = r, g, b
+                                            self:UpdateAllDispelHighlights()
+                                        end,
+                                    },
+                                    colorPoison = {
+                                        name  = L["Poison"],
+                                        type  = "color",
+                                        order = 3,
+                                        get   = function()
+                                            local c = self.db.profile.dispelAlertColorPoison
+                                            return c.r, c.g, c.b
+                                        end,
+                                        set   = function(_, r, g, b)
+                                            local c = self.db.profile.dispelAlertColorPoison
+                                            c.r, c.g, c.b = r, g, b
+                                            self:UpdateAllDispelHighlights()
+                                        end,
+                                    },
+                                    colorDisease = {
+                                        name  = L["Disease"],
+                                        type  = "color",
+                                        order = 4,
+                                        get   = function()
+                                            local c = self.db.profile.dispelAlertColorDisease
+                                            return c.r, c.g, c.b
+                                        end,
+                                        set   = function(_, r, g, b)
+                                            local c = self.db.profile.dispelAlertColorDisease
+                                            c.r, c.g, c.b = r, g, b
+                                            self:UpdateAllDispelHighlights()
+                                        end,
+                                    },
+                                },
                             },
                         },
                     },

@@ -7,3 +7,4 @@ ignore:
 
 optional-dependencies:
   - 13592-masque
+  - 19268-shadowed-unit-frames

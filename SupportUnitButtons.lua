@@ -32,6 +32,89 @@ local MAX_INDIVIDUAL    = 6
 local SEPARATOR_GAP     = 8  -- gap between shared and individual sections (px)
 local HANDLE_HEIGHT     = 14 -- drag handle strip height (px)
 
+-- Returns the ShadowedUnitFrames unit frame for the given unit token, or nil.
+--
+-- Party frames live inside a SecureGroupHeaderTemplate and have no predictable
+-- global names, so we use SUF's own unitFrames map.
+--
+-- Special case for "player":
+--   SUF's OnAttributeChanged only registers a frame into unitFrames when
+--   unitRealType == unitType.  For the party-header child whose unit is
+--   "player", unitRealType="player" but unitType="party" → the child is
+--   NEVER stored in unitFrames["player"].
+--   We therefore scan the party header's children for an IsShown child with
+--   unit="player" before falling back to the standalone SUFUnitplayer frame.
+-- Returns ShadowedUnitFrames' units table, or nil when SUF is unavailable.
+local function GetShadowUFUnits()
+    local suf = _G["ShadowUF"]
+    return suf and suf.Units or nil
+end
+
+-- Returns the visible player frame embedded in SUF's party header, or nil.
+local function GetSUFPartyPlayerFrame(units)
+    local partyHeader = units.headerFrames and units.headerFrames["party"]
+    if not partyHeader or not partyHeader:IsShown() then return nil end
+
+    for _, child in ipairs({ partyHeader:GetChildren() }) do
+        if child:GetAttribute("unit") == "player" and child:IsShown() then
+            return child
+        end
+    end
+
+    return nil
+end
+
+-- Returns the visible frame from SUF's unitFrames map, or nil.
+local function GetSUFUnitFrame(units, unit)
+    local unitFrames = units.unitFrames
+    if not unitFrames then return nil end
+
+    local frame = unitFrames[unit]
+    if frame and frame:IsShown() then return frame end
+
+    return nil
+end
+
+-- Returns the visible standalone global SUF frame, or nil.
+local function GetStandaloneSUFFrame(unit)
+    local standalone = _G["SUFUnit" .. unit]
+    if standalone and standalone:IsShown() then return standalone end
+
+    return nil
+end
+
+-- Returns the highest-priority special-case SUF frame for `unit`, or nil.
+local function GetPreferredSUFFrame(units, unit)
+    if unit ~= "player" then return nil end
+    return GetSUFPartyPlayerFrame(units)
+end
+
+local function GetSUFFrame(unit)
+    local units = GetShadowUFUnits()
+    if not units then return nil end
+
+    return GetPreferredSUFFrame(units, unit)
+        or GetSUFUnitFrame(units, unit)
+        or GetStandaloneSUFFrame(unit)
+end
+
+-- Vertical Y-offset applied in ApplySUFPositions so that the chosen anchor
+-- point refers to the BUTTON STRIP, not to the drag-handle label above it.
+-- The handle sits at the top of the frame (height = HANDLE_HEIGHT), so:
+--   TOP*  anchors need the frame shifted UP  by HANDLE_HEIGHT
+--   MID   anchors need the frame shifted UP  by HANDLE_HEIGHT/2
+--   BOT*  anchors need no adjustment (buttons end at the frame bottom)
+local SUF_HANDLE_ADJUST = {
+    TOPLEFT     = HANDLE_HEIGHT,
+    TOP         = HANDLE_HEIGHT,
+    TOPRIGHT    = HANDLE_HEIGHT,
+    LEFT        = math.floor(HANDLE_HEIGHT / 2),
+    RIGHT       = math.floor(HANDLE_HEIGHT / 2),
+    BOTTOMLEFT  = 0,
+    BOTTOM      = 0,
+    BOTTOMRIGHT = 0,
+}
+
 local defaults          = SUB_NS.defaults
 
 -------------------------------------------------------------------------------
@@ -379,7 +462,7 @@ local function ForEachButton(bars, fn)
     for _, unit in ipairs(UNITS) do
         local bd = bars[unit]
         if bd then
-            for _, btn in ipairs(bd.sharedButtons)    do fn(btn) end
+            for _, btn in ipairs(bd.sharedButtons) do fn(btn) end
             for _, btn in ipairs(bd.individualButtons) do fn(btn) end
         end
     end
@@ -722,7 +805,7 @@ function SUB:CreateBar(unit)
     handle:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     handle:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
     handle:SetHeight(HANDLE_HEIGHT)
-    handle:EnableMouse(not db.locked)
+    handle:EnableMouse(not db.locked and db.positionMode ~= "suf")
     handle:RegisterForDrag("LeftButton")
 
     local handleBg = handle:CreateTexture(nil, "BACKGROUND")
@@ -740,10 +823,17 @@ function SUB:CreateBar(unit)
     handle:SetScript("OnDragStop", function()
         frame:StopMovingOrSizing()
         local ddb = self.db.profile
-        local sc  = frame:GetEffectiveScale() / UIParent:GetEffectiveScale()
+
+        -- SUF mode: snap back to SUF anchor (bars are not freely draggable).
+        if ddb.positionMode == "suf" then
+            self:ApplySUFPositions()
+            return
+        end
+
+        local sc = frame:GetEffectiveScale() / UIParent:GetEffectiveScale()
         -- x/y stored as TOPLEFT offset from UIParent TOPLEFT
-        local fx  = frame:GetLeft() * sc
-        local fy  = frame:GetTop() * sc - UIParent:GetHeight()
+        local fx = frame:GetLeft() * sc
+        local fy = frame:GetTop() * sc - UIParent:GetHeight()
 
         if ddb.positionMode == "anchored" then
             -- Back-calculate the anchor (position of bar #0)
@@ -941,9 +1031,11 @@ function SUB:UpdateAllLayouts()
     for _, unit in ipairs(UNITS) do
         self:UpdateBarLayout(unit)
     end
-    -- re-apply anchored positions since bar size may have changed
+    -- re-apply anchored/suf positions since bar size may have changed
     if self.db.profile.positionMode == "anchored" then
         self:ApplyAnchoredPositions()
+    elseif self.db.profile.positionMode == "suf" then
+        self:ApplySUFPositions()
     end
 end
 
@@ -1271,8 +1363,8 @@ local function ApplyReagentCountStyle(fs, btn, db, count)
         btn.Count:Hide()
         btn.SUB_reagentCountHidden = true
     end
-    local corner   = db.reagentCountCorner or "TOPRIGHT"
-    local off      = CORNER_OFFSET[corner] or CORNER_OFFSET.TOPRIGHT
+    local corner = db.reagentCountCorner or "TOPRIGHT"
+    local off    = CORNER_OFFSET[corner] or CORNER_OFFSET.TOPRIGHT
     fs:ClearAllPoints()
     fs:SetPoint(corner, btn, corner, off[1] + (db.reagentCountOffsetX or 0), off[2] + (db.reagentCountOffsetY or 0))
     local c        = db.reagentCountColor or { r = 1, g = 0.5, b = 0.0, a = 1 }
@@ -1656,22 +1748,58 @@ local function UpdateBarVisibility(self, unit)
     if show then RefreshVisibleBarState(self, unit) end
 end
 
--- Refreshes bar visibility for all units.
--- Protected frames cannot call SetShown during combat lockdown, so updates
--- are deferred via rosterDirty until combat ends.
-function SUB:OnRosterUpdate()
-    if CE.Combat.InCombatLockdown() then
-        self.rosterDirty = true
-        return
-    end
+-- Returns true when roster updates must be deferred until combat ends.
+local function DeferRosterUpdateIfInCombat(self)
+    if not CE.Combat.InCombatLockdown() then return false end
+    self.rosterDirty = true
+    return true
+end
+
+-- Refreshes visibility for every managed bar that currently exists.
+local function UpdateAllBarVisibility(self)
     for _, unit in ipairs(UNITS) do
         local barData = self.bars[unit]
         if not barData then break end
         UpdateBarVisibility(self, unit)
     end
-    if self.db.profile.positionMode == "anchored" then
+end
+
+-- Applies the position refresh required by the current roster mode.
+local function ApplyRosterPositionMode(self)
+    local positionMode = self.db.profile.positionMode
+    if positionMode == "anchored" then
         self:ApplyAnchoredPositions()
+        return
     end
+    if positionMode == "suf" then
+        -- Defer to next tick: SUF's own GROUP_ROSTER_UPDATE handler may not
+        -- have run yet (same event tick, order undefined).  C_Timer.After(0)
+        -- fires after all handlers for the current frame have completed, so
+        -- SUF frames are guaranteed to be created/shown by then.
+        self:ScheduleSUFPositions()
+    end
+end
+
+-- Refreshes bar visibility for all units.
+-- Protected frames cannot call SetShown during combat lockdown, so updates
+-- are deferred via rosterDirty until combat ends.
+function SUB:OnRosterUpdate()
+    if DeferRosterUpdateIfInCombat(self) then return end
+    UpdateAllBarVisibility(self)
+    ApplyRosterPositionMode(self)
+end
+
+-- Schedules a deferred ApplySUFPositions call for the next frame tick.
+-- Guards against stacking multiple pending calls from rapid roster changes.
+function SUB:ScheduleSUFPositions()
+    if self.sufPosPending then return end
+    self.sufPosPending = true
+    C_Timer.After(0, function()
+        self.sufPosPending = false
+        if self.db and self.db.profile and self.db.profile.positionMode == "suf" then
+            self:ApplySUFPositions()
+        end
+    end)
 end
 
 -------------------------------------------------------------------------------
@@ -1718,6 +1846,47 @@ function SUB:ApplyAnchoredPositions()
     end
 end
 
+-- "suf" mode: anchor each bar to its corresponding ShadowedUnitFrames party frame.
+-- The Y offset is adjusted automatically so the anchor point refers to the
+-- button strip rather than the drag-handle label (SUF_HANDLE_ADJUST).
+function SUB:ApplySUFPositions()
+    local db       = self.db.profile
+    local selfPt   = db.sufAnchorSelf or "LEFT"
+    local targetPt = db.sufAnchorTarget or "RIGHT"
+    local offX     = db.sufOffsetX or 0
+    local offY     = db.sufOffsetY or 0
+    local yAdj     = SUF_HANDLE_ADJUST[selfPt] or 0
+
+    for _, unit in ipairs(UNITS) do
+        local bd = self.bars[unit]
+        if bd and bd.frame:IsShown() then
+            local sufFrame = GetSUFFrame(unit)
+            bd.frame:ClearAllPoints()
+            if sufFrame then
+                bd.frame:SetPoint(selfPt, sufFrame, targetPt, offX, offY + yAdj)
+            else
+                -- Fallback when no visible SUF frame found: default stacking.
+                local uIdx = UNIT_INDEX[unit] or 0
+                bd.frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT",
+                    10, -100 - uIdx * (db.buttonSize + HANDLE_HEIGHT + 6))
+            end
+        end
+    end
+end
+
+-- Updates EnableMouse on all drag handles based on locked state and position mode.
+-- In "suf" mode bars follow SUF frames, so dragging is always suppressed.
+function SUB:UpdateAllHandleInteractivity()
+    local db = self.db.profile
+    local canDrag = not db.locked and db.positionMode ~= "suf"
+    for _, unit in ipairs(UNITS) do
+        local bd = self.bars[unit]
+        if bd then
+            bd.handle:EnableMouse(canDrag)
+        end
+    end
+end
+
 -- Restores one bar position from saved coordinates or default stack.
 -- Positions `frame` from saved coordinates, or falls back to default stacking.
 local function SetBarPosition(frame, unit, saved, db)
@@ -1731,12 +1900,13 @@ local function SetBarPosition(frame, unit, saved, db)
     end
 end
 
--- Restores `unit`'s bar to its saved position, or skips if anchored mode is active.
+-- Restores `unit`'s bar to its saved position, or skips if anchored/suf mode is active.
 function SUB:RestoreBarPosition(unit)
     local db      = self.db.profile
     local barData = self.bars[unit]
     if not barData then return end
     if db.positionMode == "anchored" then return end
+    if db.positionMode == "suf" then return end -- ApplySUFPositions called after bars are created
     SetBarPosition(barData.frame, unit, db.bars[unit], db)
 end
 
@@ -1764,10 +1934,11 @@ end
 
 function SUB:SetLocked(locked)
     self.db.profile.locked = locked
+    local canDrag = not locked and self.db.profile.positionMode ~= "suf"
     for _, unit in ipairs(UNITS) do
         local barData = self.bars[unit]
         if barData then
-            barData.handle:EnableMouse(not locked)
+            barData.handle:EnableMouse(canDrag)
             barData.handleBg:SetShown(not locked)
             self:UpdateLabelVisibility(unit)
         end

@@ -7,7 +7,7 @@ if not L then return end
 
 -- 选项卡
 L["Bar"]                                                                                                                          = "条"
-L["Spell"]                                                                                                                        = "法术"
+L["Button Overlays"]                                                                                                              = "按钮覆盖"
 L["Dispel"]                                                                                                                       = "驱散"
 
 -- 常规
@@ -56,6 +56,18 @@ L["Horizontal"]                                                                 
 L["Gap between bars"]                                                                                                             = "条之间的间距"
 L["Pixels between bars in anchored mode"]                                                                                         = "锚定模式下条之间的像素"
 L["Reset positions"]                                                                                                              = "重置位置"
+L["ShadowedUnitFrames: anchor each bar next to a SUF party frame."]                                                               =
+"ShadowedUnitFrames：将每条锚定到 SUF 小队框架旁边。"
+L["ShadowedUnitFrames"]                                                                                                           = "ShadowedUnitFrames"
+
+-- ShadowedUnitFrames 锚定
+L["ShadowedUnitFrames Anchor"]                                                                                                    = "ShadowedUnitFrames 锚定"
+L["Bar anchor point"]                                                                                                             = "条的锚定点"
+L["Which point of the SUB bar to anchor from"]                                                                                    = "SUB 条哪个点用于锚定"
+L["SUF anchor point"]                                                                                                             = "SUF 框架的锚定点"
+L["Which point of the SUF frame to attach to"]                                                                                    = "SUF 框架哪个点用于附着"
+L["Horizontal offset from the SUF anchor point (pixels)"]                                                                         = "从 SUF 锚定点的水平偏移（像素）"
+L["Vertical offset from the SUF anchor point (pixels)"]                                                                           = "从 SUF 锚定点的垂直偏移（像素）"
 
 -- 共同文本（法术等级 + 施法次数）
 L["Font"]                                                                                                                         = "字体"
@@ -78,6 +90,10 @@ L["Horizontal fine-tuning offset (added to the corner's base position)"]        
 L["Offset Y"]                                                                                                                     = "偏移 Y"
 L["Vertical fine-tuning offset (added to the corner's base position)"]                                                            = "垂直微调偏移（添加到角落基础位置）"
 L["Color"]                                                                                                                        = "颜色"
+L["Colors"]                                                                                                                       = "颜色"
+L["Spell Rank Color"]                                                                                                             = "法术等级颜色"
+L["Reagent Count Color"]                                                                                                          = "材料数量颜色"
+L["Normal Color"]                                                                                                                 = "常规颜色"
 L["Enable"]                                                                                                                       = "启用"
 
 -- 法术等级
@@ -130,6 +146,7 @@ L["Border width in pixels. 0 = automatic (6 % of button size)."]                
 L["Border Padding"]                                                                                                               = "边框间距"
 L["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."]          =
 "与按钮边缘的距离（像素）。正数 = 向外扩展，负数 = 向内收缩。"
+L["Debuff Color"]                                                                                                                 = "减益颜色"
 L["Type Colors"]                                                                                                                  = "类型颜色"
 L["Per debuff type"]                                                                                                              = "按减益类型"
 L["Use a different color per debuff type (Magic, Curse, Poison, Disease)."]                                                       =
@@ -156,8 +173,8 @@ L["Masque is required to skin the buttons.\nInstall Masque to enable this featur
 "需要 Masque 才能为按钮应用皮肤。\n安装 Masque 以启用此功能。"
 
 -- 材料数量
-L["Reagent Count"]                                                                                   = "材料数量"
-L["Show the reagent count on spell buttons that require reagents, replacing the default count display."] =
+L["Reagent Count"]                                                                                                                = "材料数量"
+L["Show the reagent count on spell buttons that require reagents, replacing the default count display."]                          =
 "在需要材料的法术按钮上显示材料数量，替换默认的数量显示。"
 
 -- 增益状态

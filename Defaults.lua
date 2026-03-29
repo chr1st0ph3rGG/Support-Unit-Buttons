@@ -16,11 +16,15 @@ SUB_NS.defaults = {
         showPlayerOnlyInParty        = false,
         showLabels                   = true,  -- show name labels while locked
         showEmptyButtons             = true,  -- keep empty slots visible permanently
-        positionMode                 = "anchored", -- "free" | "anchored"
+        positionMode                 = "anchored", -- "free" | "anchored" | "suf"
         anchorDirection              = "vertical", -- "vertical" | "horizontal"
         anchorGap                    = 4,     -- gap between bars in anchored mode (px)
         anchorX                      = 10,    -- TOPLEFT x offset from UIParent in anchored mode
         anchorY                      = -100,  -- TOPLEFT y offset from UIParent in anchored mode
+        sufAnchorSelf                = "LEFT",   -- anchor point on the SUB bar frame
+        sufAnchorTarget              = "RIGHT",  -- anchor point on the SUF party frame
+        sufOffsetX                   = 0,        -- horizontal pixel offset
+        sufOffsetY                   = 0,        -- vertical pixel offset
         bars                         = {
             ["*"] = { x = nil, y = nil },
         },

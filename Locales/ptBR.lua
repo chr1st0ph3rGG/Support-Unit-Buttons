@@ -7,7 +7,7 @@ if not L then return end
 
 -- Abas
 L["Bar"]                                                                                                                          = "Barra"
-L["Spell"]                                                                                                                        = "Magia"
+L["Button Overlays"]                                                                                                              = "Sobreposições de botões"
 L["Dispel"]                                                                                                                       = "Dissipar"
 
 -- Geral
@@ -59,6 +59,20 @@ L["Horizontal"]                                                                 
 L["Gap between bars"]                                                                                                             = "Espaço entre barras"
 L["Pixels between bars in anchored mode"]                                                                                         = "Pixels entre barras no modo ancorado"
 L["Reset positions"]                                                                                                              = "Redefinir posições"
+L["ShadowedUnitFrames: anchor each bar next to a SUF party frame."]                                                               =
+"ShadowedUnitFrames: Ancore cada barra ao lado de um quadro de grupo SUF."
+L["ShadowedUnitFrames"]                                                                                                           = "ShadowedUnitFrames"
+
+-- Ancoragem ShadowedUnitFrames
+L["ShadowedUnitFrames Anchor"]                                                                                                    = "Ancoragem ShadowedUnitFrames"
+L["Bar anchor point"]                                                                                                             = "Ponto de ancoragem da barra"
+L["Which point of the SUB bar to anchor from"]                                                                                    = "Qual ponto da barra SUB usar para a ancoragem"
+L["SUF anchor point"]                                                                                                             = "Ponto de ancoragem do quadro SUF"
+L["Which point of the SUF frame to attach to"]                                                                                    = "Qual ponto do quadro SUF para o anexo"
+L["Horizontal offset from the SUF anchor point (pixels)"]                                                                         =
+"Deslocamento horizontal a partir do ponto de ancoragem SUF (pixels)"
+L["Vertical offset from the SUF anchor point (pixels)"]                                                                           =
+"Deslocamento vertical a partir do ponto de ancoragem SUF (pixels)"
 
 -- Textos comuns (Nível da magia + Contagem de lançamentos)
 L["Font"]                                                                                                                         = "Fonte"
@@ -83,6 +97,10 @@ L["Offset Y"]                                                                   
 L["Vertical fine-tuning offset (added to the corner's base position)"]                                                            =
 "Deslocamento de ajuste fino vertical (adicionado à posição base do canto)"
 L["Color"]                                                                                                                        = "Cor"
+L["Colors"]                                                                                                                       = "Cores"
+L["Spell Rank Color"]                                                                                                             = "Cor do nível de magia"
+L["Reagent Count Color"]                                                                                                          = "Cor da contagem de reagentes"
+L["Normal Color"]                                                                                                                 = "Cor normal"
 L["Enable"]                                                                                                                       = "Ativar"
 
 -- Nível da magia
@@ -137,6 +155,7 @@ L["Border width in pixels. 0 = automatic (6 % of button size)."]                
 L["Border Padding"]                                                                                                               = "Espaçamento da borda"
 L["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."]          =
 "Distância da borda do botão em pixels. Positivo = estende para fora do botão, negativo = recua para dentro do botão."
+L["Debuff Color"]                                                                                                                 = "Cor de debuff"
 L["Type Colors"]                                                                                                                  = "Cores por tipo"
 L["Per debuff type"]                                                                                                              = "Por tipo de debuff"
 L["Use a different color per debuff type (Magic, Curse, Poison, Disease)."]                                                       =
@@ -165,8 +184,8 @@ L["Masque is required to skin the buttons.\nInstall Masque to enable this featur
 "Masque é necessário para aplicar skins nos botões.\nInstale o Masque para habilitar este recurso."
 
 -- Contagem de reagentes
-L["Reagent Count"]                                                                                   = "Contagem de reagentes"
-L["Show the reagent count on spell buttons that require reagents, replacing the default count display."] =
+L["Reagent Count"]                                                                                                                = "Contagem de reagentes"
+L["Show the reagent count on spell buttons that require reagents, replacing the default count display."]                          =
 "Exibe a contagem de reagentes nos botões de magia que requerem reagentes, substituindo a exibição de contagem padrão."
 
 -- Status do buff
