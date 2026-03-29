@@ -374,8 +374,33 @@ function SUB:OnPlayerPowerUpdate(event, unit, powerType)
     self:UpdateAllCastCounts()
 end
 
--- Called when bag contents change; refreshes item-count labels.
+-- Calls fn(btn) for every button (shared + individual) on every active bar.
+local function ForEachButton(bars, fn)
+    for _, unit in ipairs(UNITS) do
+        local bd = bars[unit]
+        if bd then
+            for _, btn in ipairs(bd.sharedButtons)    do fn(btn) end
+            for _, btn in ipairs(bd.individualButtons) do fn(btn) end
+        end
+    end
+end
+
+-- Refreshes the native LAB count for a single spell button (skipped if the
+-- custom overlay already covers it or the button has no action).
+local function RefreshNativeLABCount(btn)
+    if btn._state_type ~= "spell" or btn.SUB_reagentCountHidden then return end
+    if btn.Count and btn:HasAction() then
+        btn.Count:SetText(btn:GetDisplayCount())
+    end
+end
+
+-- Called when bag contents change; refreshes reagent and item-count labels.
 function SUB:OnBagUpdate()
+    -- Custom reagent count overlay (hides native LAB count for covered buttons).
+    self:UpdateAllReagentCounts()
+    -- Refresh native LAB count for spell buttons not covered by the custom overlay.
+    -- LAB does not listen to BAG_UPDATE for spell-type buttons.
+    ForEachButton(self.bars, RefreshNativeLABCount)
     if not self.db.profile.showCastCount then return end
     self:UpdateAllCastCounts()
 end
@@ -616,6 +641,14 @@ local function AttachCastCountText(btn)
     btn.SUB_castCountText = fs
 end
 
+-- Attach a reagent-count FontString to a button (corner set dynamically on update).
+local function AttachReagentCountText(btn)
+    local fs = GetOrCreateTextOverlay(btn):CreateFontString(nil, "OVERLAY")
+    fs:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
+    fs:SetText("")
+    btn.SUB_reagentCountText = fs
+end
+
 -- Attach a buff-status FontString to a button (corner set dynamically on update).
 local function AttachBuffStatusText(btn)
     local fs = GetOrCreateTextOverlay(btn):CreateFontString(nil, "OVERLAY")
@@ -765,6 +798,7 @@ function SUB:CreateBar(unit)
         btn.SUB_index   = i
         WrapButtonForUnitTarget(header, btn)
         AttachRankText(btn)
+        AttachReagentCountText(btn)
         AttachCastCountText(btn)
         AttachBuffStatusText(btn)
         if self.masqueGroup then self.masqueGroup:AddButton(btn) end
@@ -782,6 +816,7 @@ function SUB:CreateBar(unit)
         btn.SUB_index   = i
         WrapButtonForUnitTarget(header, btn)
         AttachRankText(btn)
+        AttachReagentCountText(btn)
         AttachCastCountText(btn)
         AttachBuffStatusText(btn)
         if self.masqueGroup then self.masqueGroup:AddButton(btn) end
@@ -1084,8 +1119,12 @@ function SUB:ClearSharedButton(btn)
     if CE.Combat.InCombatLockdown() then return end
     btn:SetState(nil, "empty", nil)
     btn:SetAttribute("SUB_macro", nil)
-    for _, field in ipairs({ "SUB_rankText", "SUB_castCountText", "SUB_buffStatusText" }) do
+    for _, field in ipairs({ "SUB_rankText", "SUB_reagentCountText", "SUB_castCountText", "SUB_buffStatusText" }) do
         if btn[field] then btn[field]:SetText("") end
+    end
+    if btn.SUB_reagentCountHidden and btn.Count then
+        btn.Count:Show()
+        btn.SUB_reagentCountHidden = nil
     end
     self:UpdateDispelHighlight(btn)
 end
@@ -1198,6 +1237,78 @@ function SUB:UpdateAllCastCounts()
             for _, btn in ipairs(bd.individualButtons) do
                 local t, a = btn:GetAction()
                 self:UpdateButtonCastCount(btn, t, a)
+            end
+        end
+    end
+end
+
+-------------------------------------------------------------------------------
+-- Reagent Count
+--
+-- Shows how many times a reagent-based spell can be cast given current bag
+-- contents.  Replaces the native LAB count for those buttons so it can be
+-- placed in a freely configurable corner.
+-------------------------------------------------------------------------------
+
+local function RestoreNativeCount(btn)
+    if btn.SUB_reagentCountHidden and btn.Count then
+        btn.Count:Show()
+        btn.SUB_reagentCountHidden = nil
+    end
+end
+
+-- Returns the cast count for a reagent spell, or nil when the overlay is disabled.
+local function GetReagentDisplayCount(btn, btnType, action, db)
+    if not db or not db.showReagentCount then return nil end
+    if btnType ~= "spell" or not action then return nil end
+    local count = btn.GetDisplayCount and btn:GetDisplayCount()
+    return (count and count ~= 0) and count or nil
+end
+
+local function ApplyReagentCountStyle(fs, btn, db, count)
+    -- Hide native LAB count and show custom overlay.
+    if btn.Count and not btn.SUB_reagentCountHidden then
+        btn.Count:Hide()
+        btn.SUB_reagentCountHidden = true
+    end
+    local corner   = db.reagentCountCorner or "TOPRIGHT"
+    local off      = CORNER_OFFSET[corner] or CORNER_OFFSET.TOPRIGHT
+    fs:ClearAllPoints()
+    fs:SetPoint(corner, btn, corner, off[1] + (db.reagentCountOffsetX or 0), off[2] + (db.reagentCountOffsetY or 0))
+    local c        = db.reagentCountColor or { r = 1, g = 0.5, b = 0.0, a = 1 }
+    local flags    = (db.reagentCountOutline and db.reagentCountOutline ~= "NONE") and db.reagentCountOutline or ""
+    local fontPath = LSM:Fetch("font", db.reagentCountFont or "Friz Quadrata TT")
+    fs:SetFont(fontPath, db.reagentCountFontSize or 9, flags)
+    fs:SetTextColor(c.r or 1, c.g or 1, c.b or 1, c.a or 1)
+    fs:SetText(tostring(count))
+end
+
+-- Updates the custom reagent-count overlay for one button.
+function SUB:UpdateButtonReagentCount(btn, btnType, action)
+    local fs = btn.SUB_reagentCountText
+    if not fs then return end
+    local db    = self.db and self.db.profile
+    local count = GetReagentDisplayCount(btn, btnType, action, db)
+    if not count then
+        fs:SetText("")
+        RestoreNativeCount(btn)
+        return
+    end
+    ApplyReagentCountStyle(fs, btn, db, count)
+end
+
+-- Refreshes reagent-count overlays on all bars.
+function SUB:UpdateAllReagentCounts()
+    for _, unit in ipairs(UNITS) do
+        local bd = self.bars[unit]
+        if bd then
+            for _, btn in ipairs(bd.sharedButtons) do
+                local t, a = btn:GetAction()
+                self:UpdateButtonReagentCount(btn, t, a)
+            end
+            for _, btn in ipairs(bd.individualButtons) do
+                local t, a = btn:GetAction()
+                self:UpdateButtonReagentCount(btn, t, a)
             end
         end
     end
@@ -1379,12 +1490,22 @@ function SUB:UpdateBuffStatusesForUnit(unit)
     end
 end
 
+local function ClearTextFrame(fs)
+    if fs then fs:SetText("") end
+end
+
+local function ClearButtonOverlays(btn)
+    btn:SetAttribute("SUB_macro", nil)
+    ClearTextFrame(btn.SUB_rankText)
+    ClearTextFrame(btn.SUB_reagentCountText)
+    RestoreNativeCount(btn)
+    ClearTextFrame(btn.SUB_castCountText)
+    ClearTextFrame(btn.SUB_buffStatusText)
+end
+
 -- Clears all text overlays and metadata when a button slot becomes empty.
 local function ClearButtonState(self, btn)
-    if btn.SUB_rankText then btn.SUB_rankText:SetText("") end
-    if btn.SUB_castCountText then btn.SUB_castCountText:SetText("") end
-    if btn.SUB_buffStatusText then btn.SUB_buffStatusText:SetText("") end
-    btn:SetAttribute("SUB_macro", nil)
+    ClearButtonOverlays(btn)
     self:UpdateDispelHighlight(btn)
 end
 
@@ -1410,6 +1531,7 @@ function SUB:ApplyButtonState(btn, btnType, action)
     -- Always use the native type so LAB can resolve icon, cooldown, tooltip.
     btn:SetState(nil, btnType, action)
     self:UpdateButtonRankText(btn, btnType, action)
+    self:UpdateButtonReagentCount(btn, btnType, action)
     self:UpdateButtonCastCount(btn, btnType, action)
     self:UpdateDispelHighlight(btn)
     self:UpdateButtonBuffStatus(btn)
@@ -1427,10 +1549,7 @@ end
 local function ClearIndividualButton(btn)
     if CE.Combat.InCombatLockdown() then return end
     btn:SetState(nil, "empty", nil)
-    btn:SetAttribute("SUB_macro", nil)
-    if btn.SUB_rankText then btn.SUB_rankText:SetText("") end
-    if btn.SUB_castCountText then btn.SUB_castCountText:SetText("") end
-    if btn.SUB_buffStatusText then btn.SUB_buffStatusText:SetText("") end
+    ClearButtonOverlays(btn)
 end
 
 -- Rebuilds individual buttons for one unit from per-character slot data.

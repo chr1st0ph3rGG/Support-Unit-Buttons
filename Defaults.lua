@@ -31,8 +31,16 @@ SUB_NS.defaults = {
         spellRankColor               = { r = 1, g = 1, b = 1, a = 1 },
         spellRankOutline             = "OUTLINE",
         spellRankCorner              = "BOTTOMRIGHT",
-        spellRankOffsetX             = 0,
-        spellRankOffsetY             = 0,
+        spellRankOffsetX             = -1,
+        spellRankOffsetY             = 1,
+        showReagentCount             = true,  -- show custom reagent count overlay for reagent-based spells
+        reagentCountFont             = "2002 Bold",
+        reagentCountFontSize         = 9,
+        reagentCountColor            = { r = 1, g = 0.5, b = 0.0, a = 1 }, -- orange
+        reagentCountOutline          = "OUTLINE",
+        reagentCountCorner           = "TOPRIGHT",
+        reagentCountOffsetX          = -1,
+        reagentCountOffsetY          = -1,
         showCastCount                = true, -- show casts-until-OOM (spells) or item count
         castCountFont                = "2002 Bold",
         castCountFontSize            = 9,
@@ -40,8 +48,8 @@ SUB_NS.defaults = {
         castCountItemColor           = { r = 1, g = 0.8, b = 0.2, a = 1 },    -- gold für Items
         castCountOutline             = "OUTLINE",
         castCountCorner              = "TOPLEFT",
-        castCountOffsetX             = 0,
-        castCountOffsetY             = 0,
+        castCountOffsetX             = 1,
+        castCountOffsetY             = -1,
         dispelAlert                  = true,
         dispelAlertColor             = { r = 1.0, g = 0.0, b = 0.0 },
         dispelAlertAlphaMin          = 0.0,     -- minimum opacity at animation trough (0 = full pulse)
@@ -66,8 +74,8 @@ SUB_NS.defaults = {
         buffStatusLowColor           = { r = 1.0, g = 0.0, b = 0.0, a = 1 }, -- rot wenn unter Schwellwert
         buffStatusLowThreshold       = 60,                              -- Sekunden
         buffStatusOutline            = "OUTLINE",
-        buffStatusOffsetX            = 0,
-        buffStatusOffsetY            = 0,
+        buffStatusOffsetX            = 1,
+        buffStatusOffsetY            = 1,
         tutorialPage                 = 0, -- highest tutorial page the player has seen
     },
     char = {

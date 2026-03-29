@@ -163,6 +163,11 @@ L["Open the Masque skin options for SupportUnitButtons."]                       
 L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]                 =
 "Masque wird benötigt um die Buttons zu stylen.\nInstalliere Masque um diese Funktion zu nutzen."
 
+-- Reagenzien-Anzahl
+L["Reagent Count"]                                                                                   = "Reagenzien-Anzahl"
+L["Show the reagent count on spell buttons that require reagents, replacing the default count display."] =
+"Zeigt die Reagenzien-Anzahl auf Zauber-Buttons die Reagenzien benötigen und ersetzt dabei die Standard-Anzeige."
+
 -- Buff-Status
 L["Buff Status"]                                                                                     = "Buff-Status"
 L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."] =

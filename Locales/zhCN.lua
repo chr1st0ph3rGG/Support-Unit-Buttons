@@ -155,6 +155,11 @@ L["Open the Masque skin options for SupportUnitButtons."]                       
 L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]                                              =
 "需要 Masque 才能为按钮应用皮肤。\n安装 Masque 以启用此功能。"
 
+-- 材料数量
+L["Reagent Count"]                                                                                   = "材料数量"
+L["Show the reagent count on spell buttons that require reagents, replacing the default count display."] =
+"在需要材料的法术按钮上显示材料数量，替换默认的数量显示。"
+
 -- 增益状态
 L["Buff Status"]                                                                                                                  = "增益状态"
 L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."] =

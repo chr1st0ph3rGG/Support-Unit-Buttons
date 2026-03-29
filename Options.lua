@@ -579,11 +579,141 @@ function SUB:BuildOptionsTable()
                         },
                     },
 
+                    reagentCount = {
+                        name   = L["Reagent Count"],
+                        type   = "group",
+                        inline = true,
+                        order  = 3,
+                        args   = {
+                            showReagentCount = {
+                                name  = L["Enable"],
+                                desc  = L["Show the reagent count on spell buttons that require reagents, replacing the default count display."],
+                                type  = "toggle",
+                                order = 1,
+                                get   = function() return self.db.profile.showReagentCount end,
+                                set   = function(_, v)
+                                    self.db.profile.showReagentCount = v
+                                    self:UpdateAllReagentCounts()
+                                end,
+                            },
+                            reagentCountFont = {
+                                name        = L["Font"],
+                                type        = "select",
+                                order       = 2,
+                                disabled    = function() return not self.db.profile.showReagentCount end,
+                                values      = LSM:List("font"),
+                                itemControl = "DDI-Font",
+                                get         = function()
+                                    local fonts   = LSM:List("font")
+                                    local current = self.db.profile.reagentCountFont
+                                    for i, v in next, fonts do
+                                        if v == current then return i end
+                                    end
+                                end,
+                                set         = function(_, i)
+                                    self.db.profile.reagentCountFont = LSM:List("font")[i]
+                                    self:UpdateAllReagentCounts()
+                                end,
+                            },
+                            reagentCountFontSize = {
+                                name     = L["Font size"],
+                                type     = "range",
+                                min      = 6,
+                                max      = 20,
+                                step     = 1,
+                                order    = 3,
+                                disabled = function() return not self.db.profile.showReagentCount end,
+                                get      = function() return self.db.profile.reagentCountFontSize end,
+                                set      = function(_, v)
+                                    self.db.profile.reagentCountFontSize = v
+                                    self:UpdateAllReagentCounts()
+                                end,
+                            },
+                            reagentCountOutline = {
+                                name     = L["Outline"],
+                                type     = "select",
+                                order    = 4,
+                                disabled = function() return not self.db.profile.showReagentCount end,
+                                values   = {
+                                    NONE         = L["None"],
+                                    OUTLINE      = L["Outline"],
+                                    THICKOUTLINE = L["Thick outline"],
+                                },
+                                get      = function() return self.db.profile.reagentCountOutline end,
+                                set      = function(_, v)
+                                    self.db.profile.reagentCountOutline = v
+                                    self:UpdateAllReagentCounts()
+                                end,
+                            },
+                            reagentCountCorner = {
+                                name     = L["Corner"],
+                                type     = "select",
+                                order    = 5,
+                                disabled = function() return not self.db.profile.showReagentCount end,
+                                values   = {
+                                    TOPLEFT     = L["Top left"],
+                                    TOPRIGHT    = L["Top right"],
+                                    BOTTOMLEFT  = L["Bottom left"],
+                                    BOTTOMRIGHT = L["Bottom right"],
+                                },
+                                get      = function() return self.db.profile.reagentCountCorner end,
+                                set      = function(_, v)
+                                    self.db.profile.reagentCountCorner = v
+                                    self:UpdateAllReagentCounts()
+                                end,
+                            },
+                            reagentCountOffsetX = {
+                                name     = L["Offset X"],
+                                type     = "range",
+                                min      = -20,
+                                max      = 20,
+                                step     = 1,
+                                order    = 6,
+                                disabled = function() return not self.db.profile.showReagentCount end,
+                                get      = function() return self.db.profile.reagentCountOffsetX end,
+                                set      = function(_, v)
+                                    self.db.profile.reagentCountOffsetX = v
+                                    self:UpdateAllReagentCounts()
+                                end,
+                            },
+                            reagentCountOffsetY = {
+                                name     = L["Offset Y"],
+                                type     = "range",
+                                min      = -20,
+                                max      = 20,
+                                step     = 1,
+                                order    = 7,
+                                disabled = function() return not self.db.profile.showReagentCount end,
+                                get      = function() return self.db.profile.reagentCountOffsetY end,
+                                set      = function(_, v)
+                                    self.db.profile.reagentCountOffsetY = v
+                                    self:UpdateAllReagentCounts()
+                                end,
+                            },
+                            reagentCountColor = {
+                                name     = L["Color"],
+                                type     = "color",
+                                hasAlpha = true,
+                                order    = 8,
+                                disabled = function() return not self.db.profile.showReagentCount end,
+                                get      = function()
+                                    local c = self.db.profile.reagentCountColor
+                                    return c.r, c.g, c.b, c.a
+                                end,
+                                set      = function(_, r, g, b, a)
+                                    local c = self.db.profile.reagentCountColor
+                                    c.r, c.g, c.b, c.a = r, g, b, a
+                                    self:UpdateAllReagentCounts()
+                                end,
+                            },
+                        },
+                    },
+
                     buffStatus = {
                         name   = L["Buff Status"],
                         type   = "group",
                         inline = true,
-                        order  = 3,
+                        order  = 4,
                         args   = {
                             showBuffStatus = {
                                 name  = L["Enable"],

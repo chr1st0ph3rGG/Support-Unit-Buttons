@@ -164,6 +164,11 @@ L["Open the Masque skin options for SupportUnitButtons."]                       
 L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]                                              =
 "Masque é necessário para aplicar skins nos botões.\nInstale o Masque para habilitar este recurso."
 
+-- Contagem de reagentes
+L["Reagent Count"]                                                                                   = "Contagem de reagentes"
+L["Show the reagent count on spell buttons that require reagents, replacing the default count display."] =
+"Exibe a contagem de reagentes nos botões de magia que requerem reagentes, substituindo a exibição de contagem padrão."
+
 -- Status do buff
 L["Buff Status"]                                                                                                                  = "Status do buff"
 L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."] =

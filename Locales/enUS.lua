@@ -147,6 +147,10 @@ L["Open Masque Options"]                                                        
 L["Open the Masque skin options for SupportUnitButtons."]                                            = true
 L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]                 = true
 
+-- Reagent Count
+L["Reagent Count"]                                                                                   = true
+L["Show the reagent count on spell buttons that require reagents, replacing the default count display."] = true
+
 -- Buff Status
 L["Buff Status"]                                                                                     = true
 L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."] = true

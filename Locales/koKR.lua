@@ -158,6 +158,11 @@ L["Open the Masque skin options for SupportUnitButtons."]                       
 L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]                 =
 "버튼에 스킨을 적용하려면 Masque가 필요합니다.\nMasque를 설치하여 이 기능을 활성화하세요."
 
+-- 재료 개수
+L["Reagent Count"]                                                                                   = "재료 개수"
+L["Show the reagent count on spell buttons that require reagents, replacing the default count display."] =
+"재료가 필요한 주문 버튼에 재료 개수를 표시하여 기본 개수 표시를 대체합니다."
+
 -- 버프 상태
 L["Buff Status"]                                                                                     = "버프 상태"
 L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."] =
