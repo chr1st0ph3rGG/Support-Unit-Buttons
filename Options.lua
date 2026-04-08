@@ -8,17 +8,11 @@ local AceCfg         = LibStub("AceConfig-3.0")
 local AceCfgD        = LibStub("AceConfigDialog-3.0")
 local AceDBOpt       = LibStub("AceDBOptions-3.0")
 local LSM            = LibStub("LibSharedMedia-3.0")
-local Masque         = LibStub("Masque", true)
 local L              = LibStub("AceLocale-3.0"):GetLocale("SupportUnitButtons")
 
 local UNITS          = { "player", "party1", "party2", "party3", "party4" }
 local MAX_SHARED     = 12
 local MAX_INDIVIDUAL = 6
-
-local function IsSUFInstalled()
-    local fn = (C_AddOns and C_AddOns.IsAddOnLoaded) or _G["IsAddOnLoaded"]
-    return fn ~= nil and fn("ShadowedUnitFrames") == true
-end
 
 -------------------------------------------------------------------------------
 -- Options
@@ -52,7 +46,7 @@ function SUB:BuildOptionsTable()
                                 get   = function() return self.db.profile.showPlayer end,
                                 set   = function(_, v)
                                     self.db.profile.showPlayer = v
-                                    self:OnRosterUpdate()
+                                    self:ApplyRosterUpdate()
                                 end,
                             },
                             showPlayerOnlyInParty = {
@@ -64,7 +58,7 @@ function SUB:BuildOptionsTable()
                                 get      = function() return self.db.profile.showPlayerOnlyInParty end,
                                 set      = function(_, v)
                                     self.db.profile.showPlayerOnlyInParty = v
-                                    self:OnRosterUpdate()
+                                    self:ApplyRosterUpdate()
                                 end,
                             },
                             showLabels = {
@@ -208,9 +202,11 @@ function SUB:BuildOptionsTable()
                             positionMode = {
                                 name   = L["Mode"],
                                 desc   = function()
-                                    local s = L["Free: drag each bar individually.\nAnchored: all bars move as a group."]
-                                    if IsSUFInstalled() then
-                                        s = s .. "\n" .. L["ShadowedUnitFrames: anchor each bar next to a SUF party frame."]
+                                    local s = L
+                                    ["Free: drag each bar individually.\nAnchored: all bars move as a group."]
+                                    if self:IsSUFInstalled() then
+                                        s = s ..
+                                        "\n" .. L["ShadowedUnitFrames: anchor each bar next to a SUF party frame."]
                                     end
                                     return s
                                 end,
@@ -218,7 +214,7 @@ function SUB:BuildOptionsTable()
                                 order  = 1,
                                 values = function()
                                     local vals = { free = L["Free"], anchored = L["Anchored"] }
-                                    if IsSUFInstalled() then
+                                    if self:IsSUFInstalled() then
                                         vals.suf = L["ShadowedUnitFrames"]
                                     end
                                     return vals
@@ -298,124 +294,12 @@ function SUB:BuildOptionsTable()
                             },
 
                             ---------- ShadowedUnitFrames anchor ----------
-                            sufPositioning = {
-                                name     = L["ShadowedUnitFrames Anchor"],
-                                type     = "group",
-                                inline   = true,
-                                order    = 4,
-                                hidden   = function() return not IsSUFInstalled() or self.db.profile.positionMode ~= "suf" end,
-                                args     = {
-                                    sufAnchorSelf = {
-                                        name   = L["Bar anchor point"],
-                                        desc   = L["Which point of the SUB bar to anchor from"],
-                                        type   = "select",
-                                        order  = 1,
-                                        values = {
-                                            TOPLEFT     = L["Top left"],
-                                            TOP         = L["Top"],
-                                            TOPRIGHT    = L["Top right"],
-                                            LEFT        = L["Left"],
-                                            RIGHT       = L["Right"],
-                                            BOTTOMLEFT  = L["Bottom left"],
-                                            BOTTOM      = L["Bottom"],
-                                            BOTTOMRIGHT = L["Bottom right"],
-                                        },
-                                        get    = function() return self.db.profile.sufAnchorSelf or "LEFT" end,
-                                        set    = function(_, v)
-                                            self.db.profile.sufAnchorSelf = v
-                                            self:ApplySUFPositions()
-                                        end,
-                                    },
-                                    sufAnchorTarget = {
-                                        name   = L["SUF anchor point"],
-                                        desc   = L["Which point of the SUF frame to attach to"],
-                                        type   = "select",
-                                        order  = 2,
-                                        values = {
-                                            TOPLEFT     = L["Top left"],
-                                            TOP         = L["Top"],
-                                            TOPRIGHT    = L["Top right"],
-                                            LEFT        = L["Left"],
-                                            RIGHT       = L["Right"],
-                                            BOTTOMLEFT  = L["Bottom left"],
-                                            BOTTOM      = L["Bottom"],
-                                            BOTTOMRIGHT = L["Bottom right"],
-                                        },
-                                        get    = function() return self.db.profile.sufAnchorTarget or "RIGHT" end,
-                                        set    = function(_, v)
-                                            self.db.profile.sufAnchorTarget = v
-                                            self:ApplySUFPositions()
-                                        end,
-                                    },
-                                    sufOffsetX = {
-                                        name  = L["Offset X"],
-                                        desc  = L["Horizontal offset from the SUF anchor point (pixels)"],
-                                        type  = "range",
-                                        order = 3,
-                                        width = "half",
-                                        min   = -500,
-                                        max   = 500,
-                                        step  = 1,
-                                        get   = function() return self.db.profile.sufOffsetX or 0 end,
-                                        set   = function(_, v)
-                                            self.db.profile.sufOffsetX = v
-                                            self:ApplySUFPositions()
-                                        end,
-                                    },
-                                    sufOffsetY = {
-                                        name  = L["Offset Y"],
-                                        desc  = L["Vertical offset from the SUF anchor point (pixels)"],
-                                        type  = "range",
-                                        order = 4,
-                                        width = "half",
-                                        min   = -500,
-                                        max   = 500,
-                                        step  = 1,
-                                        get   = function() return self.db.profile.sufOffsetY or 0 end,
-                                        set   = function(_, v)
-                                            self.db.profile.sufOffsetY = v
-                                            self:ApplySUFPositions()
-                                        end,
-                                    },
-                                },
-                            },
+                            sufPositioning = self:GetSUFOptionsGroup(),
                         },
                     },
 
                     ---------- Masque ----------
-                    masque = {
-                        name   = L["Masque"],
-                        type   = "group",
-                        inline = true,
-                        order  = 4,
-                        args   = {
-                            openMasque = {
-                                name     = L["Open Masque Options"],
-                                desc     = function()
-                                    if Masque then
-                                        return L["Open the Masque skin options for SupportUnitButtons."]
-                                    else
-                                        return L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]
-                                    end
-                                end,
-                                type     = "execute",
-                                order    = 1,
-                                disabled = function() return not Masque end,
-                                func     = function()
-                                    -- Trigger Masque's lazy options load if not done yet
-                                    local ldr = _G["MSQ_LDR_FRAME"]
-                                    if ldr then
-                                        local fn = ldr:GetScript("OnShow")
-                                        if fn then fn() end
-                                    end
-                                    AceCfgD:Open("Masque")
-                                    AceCfgD:SelectGroup("Masque", "Skins",
-                                        "SupportUnitButtons",
-                                        "SupportUnitButtons_Buttons")
-                                end,
-                            },
-                        },
-                    },
+                    masque = self:GetMasqueOptionsGroup(),
 
                 }, -- close settings.args
             },     -- close settings
@@ -734,7 +618,8 @@ function SUB:BuildOptionsTable()
                         args   = {
                             showReagentCount = {
                                 name  = L["Enable"],
-                                desc  = L["Show the reagent count on spell buttons that require reagents, replacing the default count display."],
+                                desc  = L
+                                ["Show the reagent count on spell buttons that require reagents, replacing the default count display."],
                                 type  = "toggle",
                                 order = 1,
                                 get   = function() return self.db.profile.showReagentCount end,
@@ -874,7 +759,8 @@ function SUB:BuildOptionsTable()
                         args   = {
                             showBuffStatus = {
                                 name  = L["Enable"],
-                                desc  = L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."],
+                                desc  = L
+                                ["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."],
                                 type  = "toggle",
                                 order = 1,
                                 get   = function() return self.db.profile.showBuffStatus end,
@@ -985,7 +871,8 @@ function SUB:BuildOptionsTable()
                             },
                             buffStatusLowThreshold = {
                                 name     = L["Low threshold (sec)"],
-                                desc     = L["Switch to the low-time color when remaining duration drops below this value (seconds)."],
+                                desc     = L
+                                ["Switch to the low-time color when remaining duration drops below this value (seconds)."],
                                 type     = "range",
                                 min      = 0,
                                 max      = 600,
@@ -1068,7 +955,8 @@ function SUB:BuildOptionsTable()
                             },
                             preview = {
                                 name     = L["Simulate dispel alert"],
-                                desc     = L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."],
+                                desc     = L
+                                ["Show the alert on all dispel buttons so you can adjust appearance outside of combat."],
                                 type     = "toggle",
                                 order    = 2,
                                 disabled = function() return not self.db.profile.dispelAlert end,
@@ -1121,7 +1009,8 @@ function SUB:BuildOptionsTable()
                             },
                             alphaMin = {
                                 name  = L["Alpha minimum"],
-                                desc  = L["Minimum opacity at the trough of the animation. 0 = fully fades out, above 0 = always visible."],
+                                desc  = L
+                                ["Minimum opacity at the trough of the animation. 0 = fully fades out, above 0 = always visible."],
                                 type  = "range",
                                 order = 4,
                                 min   = 0.0,
@@ -1167,7 +1056,8 @@ function SUB:BuildOptionsTable()
                             },
                             borderPadding = {
                                 name  = L["Border Padding"],
-                                desc  = L["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."],
+                                desc  = L
+                                ["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."],
                                 type  = "range",
                                 order = 7,
                                 min   = -8,

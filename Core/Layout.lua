@@ -1,0 +1,214 @@
+-------------------------------------------------------------------------------
+-- Core/Layout.lua
+-- Bar-Layout, Label-Sichtbarkeit, Lock/Drag-Modifier
+-------------------------------------------------------------------------------
+
+local _, SUB_NS = ...
+local SUB = LibStub("AceAddon-3.0"):GetAddon("SupportUnitButtons")
+
+local CE = LibStub("C_Everywhere")
+
+local UNITS         = SUB_NS.UNITS
+local MAX_SHARED    = SUB_NS.MAX_SHARED
+local MAX_INDIVIDUAL = SUB_NS.MAX_INDIVIDUAL
+local SEPARATOR_GAP = SUB_NS.SEPARATOR_GAP
+local HANDLE_HEIGHT = SUB_NS.HANDLE_HEIGHT
+
+-------------------------------------------------------------------------------
+-- Button-Größe
+-------------------------------------------------------------------------------
+
+-- Setzt die Größe eines Buttons. NormalTexture (leerer Slot-Rahmen) wird auf 1:1
+-- gehalten, damit er nicht in benachbarte Buttons überlappt.
+function SUB:SizeButton(btn, size)
+    btn:SetSize(size, size)
+    local nt = btn:GetNormalTexture()
+    if nt then
+        nt:ClearAllPoints()
+        nt:SetPoint("CENTER", btn, "CENTER", 0, 0)
+        nt:SetSize(size, size)
+    end
+end
+
+-------------------------------------------------------------------------------
+-- Layout
+-------------------------------------------------------------------------------
+
+-- Berechnet die Gesamtbreite einer Bar aus den Button-Einstellungen.
+function SUB:GetBarTotalWidth()
+    local db = self.db.profile
+    local sz = db.buttonSize
+    local sp = db.buttonSpacing
+    local sN = db.sharedCount
+    local iN = db.individualCount
+    local w  = 0
+    if sN > 0 then w = sN * (sz + sp) - sp end
+    if iN > 0 then
+        if w > 0 then w = w + (db.separatorGap or SEPARATOR_GAP) end
+        w = w + iN * (sz + sp) - sp
+    end
+    return math.max(w, sz)
+end
+
+-- Repositioniert und skaliert alle Buttons einer Unit-Bar.
+function SUB:UpdateBarLayout(unit)
+    local db      = self.db.profile
+    local barData = self.bars[unit]
+    if not barData then return end
+
+    local sz = db.buttonSize
+    local sp = db.buttonSpacing
+    local sN = db.sharedCount
+    local iN = db.individualCount
+
+    -- Shared Buttons
+    for i = 1, MAX_SHARED do
+        local btn = barData.sharedButtons[i]
+        if btn then
+            self:SizeButton(btn, sz)
+            btn:ClearAllPoints()
+            btn:SetPoint("TOPLEFT", barData.frame, "TOPLEFT",
+                (i - 1) * (sz + sp), -HANDLE_HEIGHT)
+            btn:SetShown(i <= sN)
+        end
+    end
+
+    -- Individual Buttons (mit Separator-Abstand nach der Shared-Sektion)
+    -- sN Shared-Buttons enden bei: (sN-1)*(sz+sp)+sz = sN*(sz+sp)-sp
+    local sepX = (sN > 0) and (sN * (sz + sp) - sp + (db.separatorGap or SEPARATOR_GAP)) or 0
+    for i = 1, MAX_INDIVIDUAL do
+        local btn = barData.individualButtons[i]
+        if btn then
+            self:SizeButton(btn, sz)
+            btn:ClearAllPoints()
+            btn:SetPoint("TOPLEFT", barData.frame, "TOPLEFT",
+                sepX + (i - 1) * (sz + sp), -HANDLE_HEIGHT)
+            btn:SetShown(i <= iN)
+        end
+    end
+
+    local totalW = self:GetBarTotalWidth()
+    barData.frame:SetSize(totalW, HANDLE_HEIGHT + sz)
+    self:UpdateLabelVisibility(unit)
+end
+
+-- Wendet Layout-Größen/-Positionen auf alle Bars neu an.
+function SUB:UpdateAllLayouts()
+    for _, unit in ipairs(UNITS) do
+        self:UpdateBarLayout(unit)
+    end
+    -- Positionen bei geänderter Bar-Größe neu anwenden
+    if self.db.profile.positionMode == "anchored" then
+        self:ApplyAnchoredPositions()
+    elseif self.db.profile.positionMode == "suf" then
+        self:ApplySUFPositions()
+    end
+end
+
+-------------------------------------------------------------------------------
+-- Label-Sichtbarkeit
+-- Labels werden gezeigt wenn: Bar entsperrt (immer) ODER showLabels-Option aktiv
+-------------------------------------------------------------------------------
+
+function SUB:UpdateLabelVisibility(unit)
+    local barData = self.bars[unit]
+    if not barData then return end
+    local db   = self.db.profile
+    local show = (not db.locked) or db.showLabels
+    barData.label:SetShown(show)
+    if show then
+        barData.label:SetText(CE.Unit.UnitName(unit) or unit)
+    end
+end
+
+-- Aktualisiert Label-Sichtbarkeit und -Text für alle Bars.
+function SUB:UpdateAllLabelVisibility()
+    for _, unit in ipairs(UNITS) do
+        self:UpdateLabelVisibility(unit)
+    end
+end
+
+-------------------------------------------------------------------------------
+-- Leere Buttons
+-------------------------------------------------------------------------------
+
+-- Wendet die "Leere Slots anzeigen"-Einstellung auf alle Buttons an.
+function SUB:ApplyShowEmptyButtonsOption()
+    if CE.Combat.InCombatLockdown() then
+        self.emptyButtonsDirty = true
+        return
+    end
+
+    local showEmpty = self.db and self.db.profile and self.db.profile.showEmptyButtons
+    for _, unit in ipairs(UNITS) do
+        local bd = self.bars[unit]
+        if bd then
+            for _, btn in ipairs(bd.sharedButtons) do
+                local cfg = btn.config or {}
+                cfg.showGrid = showEmpty and true or false
+                btn:UpdateConfig(cfg)
+            end
+            for _, btn in ipairs(bd.individualButtons) do
+                local cfg = btn.config or {}
+                cfg.showGrid = showEmpty and true or false
+                btn:UpdateConfig(cfg)
+            end
+        end
+    end
+end
+
+-- Speichert und wendet die Option "Leere Slots anzeigen" an.
+function SUB:SetShowEmptyButtons(show)
+    self.db.profile.showEmptyButtons = show and true or false
+    self:ApplyShowEmptyButtonsOption()
+end
+
+-------------------------------------------------------------------------------
+-- Drag-Modifier
+-------------------------------------------------------------------------------
+
+local DRAG_MODIFIER_CHECK = {
+    ANY   = function() return CE.Input.IsShiftKeyDown() or CE.Input.IsControlKeyDown() or CE.Input.IsAltKeyDown() end,
+    SHIFT = function() return CE.Input.IsShiftKeyDown() end,
+    CTRL  = function() return CE.Input.IsControlKeyDown() end,
+    ALT   = function() return CE.Input.IsAltKeyDown() end,
+}
+
+-- Setzt den Modifier-Key für Drag-Off auf allen Buttons.
+function SUB:SetDragModifier(mod)
+    self.db.profile.dragOffModifier = mod
+    for _, unit in ipairs(UNITS) do
+        local bd = self.bars[unit]
+        if bd then
+            for _, btn in ipairs(bd.sharedButtons) do
+                btn:SetAttribute("SUB_dragModifier", mod)
+            end
+            for _, btn in ipairs(bd.individualButtons) do
+                btn:SetAttribute("SUB_dragModifier", mod)
+            end
+        end
+    end
+end
+
+-- Gibt true zurück wenn der konfigurierte Drag-Modifier gerade gehalten wird.
+function SUB:IsDragModifierHeld()
+    local check = DRAG_MODIFIER_CHECK[self.db.profile.dragOffModifier]
+    return check and check() or false
+end
+
+-------------------------------------------------------------------------------
+-- Lock / Unlock
+-------------------------------------------------------------------------------
+
+function SUB:SetLocked(locked)
+    self.db.profile.locked = locked
+    local canDrag = not locked and self.db.profile.positionMode ~= "suf"
+    for _, unit in ipairs(UNITS) do
+        local barData = self.bars[unit]
+        if barData then
+            barData.handle:EnableMouse(canDrag)
+            barData.handleBg:SetShown(not locked)
+            self:UpdateLabelVisibility(unit)
+        end
+    end
+end
