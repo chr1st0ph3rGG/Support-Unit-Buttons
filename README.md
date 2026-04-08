@@ -1,5 +1,9 @@
 # SupportUnitButtons
 
+[![Github Repository](https://img.shields.io/badge/github-repo-blue?logo=github)](https://github.com/chr1st0ph3rGG/Support-Unit-Buttons)
+[![CurseForge Downloads](https://img.shields.io/curseforge/dt/1492820)](https://www.curseforge.com/wow/addons/support-unit-buttons)
+
+
 A World of Warcraft addon that adds a dedicated action bar for each party member, letting you cast spells or use items directly on any group member with a single click.
 
 Compatible with **Classic**, **TBC Classic**, **Classic MoP**
