@@ -78,16 +78,18 @@ local function WrapButtonForUnitTarget(header, btn)
     -- LABs eingebautes Range-Coloring nutzt FindSpellBookSlotBySpellID, das in
     -- WoW Classic nicht existiert. IsUnitInRange auf der Instanz überschreiben,
     -- damit LABs Range-Timer die Classic-API (IsSpellInRange by Name) verwendet.
+    -- Spell-Name statt ID übergeben: vermeidet den fehleranfälligen
+    -- LibSpellRange-Spellbook-Slot-Lookup der in Classic nil zurückgeben kann.
+    -- nil von IsSpellInRange bedeutet "Spell kann dieses Target nicht targetieren"
+    -- (z.B. Self-Only-Spells auf Party-Member) → kein Range-Coloring (kein Fallback auf 0).
     btn.IsUnitInRange = function(self, unit)
         if self._state_type == "spell" and unit then
             if CE.Unit.UnitExists(unit) and not CE.Unit.UnitIsConnected(unit) then
                 return 0 -- offline = außer Reichweite
             end
-            local range = SpellRange.IsSpellInRange(self._state_action, unit)
-            if range == nil and SpellRange.SpellHasRange(self._state_action) and CE.Unit.UnitExists(unit) then
-                range = 0 -- zu weit für Messung = außer Reichweite
-            end
-            return range
+            local info = CE.Spell.GetSpellInfo(self._state_action)
+            local name = info and info.name
+            return name and SpellRange.IsSpellInRange(name, unit)
         end
         return nil
     end
