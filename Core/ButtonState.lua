@@ -1,23 +1,21 @@
--------------------------------------------------------------------------------
 -- Core/ButtonState.lua
--- Button-State-Management, Roster-Sichtbarkeit, Event-Glue (Bag/Power)
+-- Button state management, roster visibility, event glue (bag/power)
 -------------------------------------------------------------------------------
 
-local _, SUB_NS = ...
-local SUB = LibStub("AceAddon-3.0"):GetAddon("SupportUnitButtons")
+local _, SUB_NS      = ...
+local SUB            = LibStub("AceAddon-3.0"):GetAddon("SupportUnitButtons")
 
-local CE = LibStub("C_Everywhere")
+local CE             = LibStub("C_Everywhere")
 
 local UNITS          = SUB_NS.UNITS
 local UNIT_INDEX     = SUB_NS.UNIT_INDEX
 local MAX_SHARED     = SUB_NS.MAX_SHARED
 local MAX_INDIVIDUAL = SUB_NS.MAX_INDIVIDUAL
 
--------------------------------------------------------------------------------
--- Iterator-Hilfsfunktion
+-- Iterator Helper
 -------------------------------------------------------------------------------
 
--- Ruft fn(btn) für jeden Button (shared + individual) auf jeder aktiven Bar auf.
+-- Calls fn(btn) for each button (shared + individual) on every active bar.
 local function ForEachButton(bars, fn)
     for _, unit in ipairs(UNITS) do
         local bd = bars[unit]
@@ -28,8 +26,8 @@ local function ForEachButton(bars, fn)
     end
 end
 
--- Aktualisiert den nativen LAB-Count für einen einzelnen Spell-Button.
--- Wird übersprungen wenn das custom Overlay es bereits abdeckt oder der Button keine Action hat.
+-- Updates the native LAB count for a single spell button.
+-- Skipped when the custom overlay already covers it or the button has no action.
 local function RefreshNativeLABCount(btn)
     if btn._state_type ~= "spell" or btn.SUB_reagentCountHidden then return end
     if btn.Count and btn:HasAction() then
@@ -54,7 +52,7 @@ local function ClearButtonOverlays(self, btn)
     ClearTextFrame(btn.SUB_buffStatusText)
 end
 
--- Leert alle Text-Overlays und Metadaten wenn ein Button-Slot leer wird.
+-- Clears all text overlays and metadata when a button slot becomes empty.
 local function ClearButtonState(self, btn)
     ClearButtonOverlays(self, btn)
     self:UpdateDispelHighlight(btn)
@@ -64,15 +62,15 @@ end
 -- Macro-Attribute
 -------------------------------------------------------------------------------
 
--- Baut Unit-targeted Macro-Text für einen Spell oder Item.
--- Gibt nil zurück wenn Spell/Item-Info noch nicht im Client-Cache ist.
+-- Builds unit-targeted macro text for a spell or item.
+-- Returns nil if spell/item info is not yet in the client cache.
 local function BuildSpellMacroText(unit, action)
     local info = CE.Spell.GetSpellInfo(action)
     if not info or not info.name then return nil end
     return "/cast [@" .. unit .. "] " .. info.name
 end
 
--- Baut einen Unit-targeted /use-Macro für einen Item-Action-String (item:ID).
+-- Builds a unit-targeted /use macro for an item action string (item:ID).
 local function BuildItemMacroText(unit, action)
     local id = action and tonumber(action:match("item:(%d+)"))
     if not id then return nil end
@@ -92,9 +90,9 @@ local function BuildMacroText(unit, btnType, action)
     return builder(unit, action)
 end
 
--- Setzt das Unit-targeted Macro-Attribut für spell/item-Buttons, oder löscht es.
--- Das PreClick/PostClick-WrapScript tauscht für die Ausführung auf dieses Macro,
--- stellt danach den Original-Typ wieder her, damit LAB Icon/Cooldown/Tooltip korrekt zeigt.
+-- Sets the unit-targeted macro attribute for spell/item buttons, or clears it.
+-- The PreClick/PostClick wrap script swaps to this macro for execution,
+-- then restores the original type so LAB shows icon/cooldown/tooltip correctly.
 local function ApplyMacroAttribute(btn, unit, btnType, action)
     if unit and (btnType == "spell" or btnType == "item") then
         btn:SetAttribute("SUB_macro", BuildMacroText(unit, btnType, action))
@@ -103,21 +101,20 @@ local function ApplyMacroAttribute(btn, unit, btnType, action)
     end
 end
 
--------------------------------------------------------------------------------
--- Button-State speichern / wiederherstellen
+-- Save / Restore Button State
 -------------------------------------------------------------------------------
 
--- Gibt true zurück wenn der Drop-Vorgang den Button leeren würde.
+-- Returns true if the drop operation would empty the button.
 local function IsEmptyButtonState(btnType, action)
     return not btnType or btnType == "empty" or not action
 end
 
--- Gibt true zurück wenn ein Slot aktuell eine nicht-leere Action speichert.
+-- Returns true if a slot currently stores a non-empty action.
 local function SlotHasAssignedAction(slot)
     return slot and slot.btnType and slot.btnType ~= "empty"
 end
 
--- Stellt vorherigen Inhalt wieder her wenn Drag-Off durch Modifier-Einstellungen blockiert.
+-- Restores previous contents when drag-off is blocked by modifier settings.
 local function RestoreIfDragOffBlocked(sub, btn, isEmpty, slot)
     if isEmpty and SlotHasAssignedAction(slot) and not sub:IsDragModifierHeld() then
         sub:RestoreButtonSilent(btn, slot.btnType, slot.action)
@@ -126,7 +123,7 @@ local function RestoreIfDragOffBlocked(sub, btn, isEmpty, slot)
     return false
 end
 
--- Wendet Shared-Slot-Speicherung an und synchronisiert den Slot auf alle Units.
+-- Applies shared-slot storage and syncs the slot to all units.
 local function HandleSharedButtonChange(sub, btn, unit, index, btnType, action, isEmpty)
     local slot = sub.db.char.sharedSlots[index] or {}
     if RestoreIfDragOffBlocked(sub, btn, isEmpty, slot) then return end
@@ -138,7 +135,7 @@ local function HandleSharedButtonChange(sub, btn, unit, index, btnType, action, 
     sub:SyncSharedSlot(unit, index, btnType, action)
 end
 
--- Wendet Per-Charakter-Slot-Updates für Individual-Buttons an.
+-- Applies per-character slot updates for individual buttons.
 local function HandleIndividualButtonChange(sub, btn, unit, index, btnType, action, isEmpty)
     local charName = CE.Unit.UnitName(unit)
     if charName and charName ~= "Unknown" then
@@ -159,7 +156,7 @@ local SECTION_HANDLER = {
     individual = HandleIndividualButtonChange,
 }
 
--- Gibt unit, section, index für `btn` zurück, oder nil wenn eines fehlt.
+-- Returns unit, section, index for `btn`, or nil if any is missing.
 local function GetButtonContext(btn)
     local unit    = btn.SUB_unit
     local section = btn.SUB_section
@@ -168,12 +165,12 @@ local function GetButtonContext(btn)
     return unit, section, index
 end
 
--- Callback-Handler: delegiert an HandleButtonContentsChanged.
+-- Callback handler: delegates to HandleButtonContentsChanged.
 function SUB:OnButtonContentsChanged(event, btn, state, btnType, action)
     self:HandleButtonContentsChanged(btn, state, btnType, action)
 end
 
--- Verteilt LAB-Content-Changes an den passenden Section-Handler.
+-- Dispatches LAB content changes to the matching section handler.
 function SUB:HandleButtonContentsChanged(btn, state, btnType, action)
     if self.syncing or tostring(state) ~= "0" then return end
     local unit, section, index = GetButtonContext(btn)
@@ -184,7 +181,7 @@ function SUB:HandleButtonContentsChanged(btn, state, btnType, action)
     end
 end
 
--- Leert einen Shared-Button auf einen leeren Zustand.
+-- Clears a shared button to an empty state.
 function SUB:ClearSharedButton(btn)
     if CE.Combat.InCombatLockdown() then return end
     btn:SetState(nil, "empty", nil)
@@ -199,7 +196,7 @@ function SUB:ClearSharedButton(btn)
     self:UpdateDispelHighlight(btn)
 end
 
--- Stellt den vorherigen Inhalt eines Buttons ohne Callback-Loop wieder her.
+-- Restores the previous button contents without a callback loop.
 function SUB:RestoreButtonSilent(btn, btnType, action)
     self.syncing = true
     self:ApplyButtonState(btn, btnType, action)
@@ -207,7 +204,7 @@ function SUB:RestoreButtonSilent(btn, btnType, action)
     ClearCursor()
 end
 
--- Wendet einen Shared-Slot-Sync-Update auf einen Ziel-Button an.
+-- Applies a shared-slot sync update to a target button.
 function SUB:SyncSharedSlotButton(btn, isEmpty, btnType, action)
     if isEmpty then
         self:ClearSharedButton(btn)
@@ -216,7 +213,7 @@ function SUB:SyncSharedSlotButton(btn, isEmpty, btnType, action)
     end
 end
 
--- Propagiert Shared-Slot-Änderungen von einer Unit auf alle anderen Unit-Bars.
+-- Propagates shared-slot changes from one unit to all other unit bars.
 function SUB:SyncSharedSlot(sourceUnit, index, btnType, action)
     if self.syncing then return end
     self.syncing = true
@@ -231,7 +228,7 @@ function SUB:SyncSharedSlot(sourceUnit, index, btnType, action)
     self.syncing = false
 end
 
--- Aktualisiert alle visuellen Zustände und Attribute für einen Button mit einer Live-Action.
+-- Updates all visual states and attributes for a button with a live action.
 function SUB:ApplyButtonState(btn, btnType, action)
     if not btnType or btnType == "empty" or not action then
         ClearButtonState(self, btn)
@@ -239,7 +236,7 @@ function SUB:ApplyButtonState(btn, btnType, action)
     end
     if CE.Combat.InCombatLockdown() then return end
     ApplyMacroAttribute(btn, btn.SUB_unit, btnType, action)
-    -- Immer den nativen Typ verwenden damit LAB Icon, Cooldown, Tooltip auflösen kann.
+    -- Always use the native type so LAB can resolve icon, cooldown, and tooltip.
     btn:SetState(nil, btnType, action)
     self:UpdateButtonRankText(btn, btnType, action)
     self:UpdateButtonReagentCount(btn, btnType, action)
@@ -248,7 +245,7 @@ function SUB:ApplyButtonState(btn, btnType, action)
     self:UpdateButtonBuffStatus(btn)
 end
 
--- Stellt einen Shared-Button aus gespeicherten Profil-Daten wieder her.
+-- Restores a shared button from saved profile data.
 function SUB:RestoreSharedButton(unit, btn, index)
     local slot = self.db.char.sharedSlots[index]
     if slot and slot.btnType then
@@ -256,13 +253,13 @@ function SUB:RestoreSharedButton(unit, btn, index)
     end
 end
 
--- Leert einen Individual-Button auf einen leeren Zustand.
+-- Clears an individual button to an empty state.
 local function ClearIndividualButton(btn)
     if CE.Combat.InCombatLockdown() then return end
     btn:SetState(nil, "empty", nil)
 end
 
--- Baut Individual-Buttons für eine Unit aus Per-Charakter-Slot-Daten neu auf.
+-- Rebuilds individual buttons for a unit from per-character slot data.
 function SUB:RefreshIndividualButtons(unit)
     local barData = self.bars[unit]
     if not barData then return end
@@ -285,7 +282,7 @@ function SUB:RefreshIndividualButtons(unit)
     self.syncing = false
 end
 
--- Wendet gespeicherte Slot-Zustände auf alle Shared-Buttons einer Bar an.
+-- Applies saved slot states to all shared buttons on a bar.
 local function ApplySharedSlots(self, bd, sharedSlots)
     for i = 1, MAX_SHARED do
         local slot = sharedSlots[i]
@@ -295,8 +292,8 @@ local function ApplySharedSlots(self, bd, sharedSlots)
     end
 end
 
--- Wendet alle gespeicherten Button-Zustände auf jede Unit-Bar neu an.
--- Aktualisiert auch die Dispel-Name-Map jetzt wo der vollständige Spell-Cache verfügbar ist.
+-- Reapplies all saved button states to every unit bar.
+-- Also updates the dispel name map now that the full spell cache is available.
 function SUB:ApplyAllButtonStates()
     if CE.Combat.InCombatLockdown() then return end
     self:BuildDispelNameTypes()
@@ -310,8 +307,7 @@ function SUB:ApplyAllButtonStates()
     end
 end
 
--------------------------------------------------------------------------------
--- Sichtbarkeit & Roster
+-- Visibility & Roster
 -------------------------------------------------------------------------------
 
 function SUB:ShouldShowPlayerBar()
@@ -321,12 +317,12 @@ function SUB:ShouldShowPlayerBar()
     return true
 end
 
--- Event-Handler: delegiert an ApplyDeferredUpdates.
+-- Event handler: delegates to ApplyDeferredUpdates.
 function SUB:OnCombatEnd()
     self:ApplyDeferredUpdates()
 end
 
--- Wendet aufgeschobene Updates nach dem Ende des Kampf-Lockdowns an.
+-- Applies deferred updates after combat lockdown ends.
 function SUB:ApplyDeferredUpdates()
     if self.rosterDirty then
         self.rosterDirty = false
@@ -338,12 +334,12 @@ function SUB:ApplyDeferredUpdates()
     end
 end
 
--- Event-Handler: delegiert an HandleUnitNameUpdate.
+-- Event handler: delegates to HandleUnitNameUpdate.
 function SUB:OnUnitNameUpdate(event, unit)
     self:HandleUnitNameUpdate(unit)
 end
 
--- Aktualisiert Individual-Buttons wenn der Name einer Unit aufgelöst wird.
+-- Updates individual buttons when a unit's name resolves.
 function SUB:HandleUnitNameUpdate(unit)
     if not unit or not UNIT_INDEX[unit] or unit == "player" then return end
     local barData = self.bars[unit]
@@ -351,7 +347,7 @@ function SUB:HandleUnitNameUpdate(unit)
     self:RefreshIndividualButtons(unit)
 end
 
--- Gibt zurück ob die Bar für `unit` aktuell sichtbar sein soll.
+-- Returns whether the bar for `unit` should currently be visible.
 local function ShouldShowBarForUnit(sub, unit)
     if unit == "player" then
         return sub:ShouldShowPlayerBar()
@@ -359,7 +355,7 @@ local function ShouldShowBarForUnit(sub, unit)
     return CE.Unit.UnitExists(unit) and true or false
 end
 
--- Führt Folge-Updates für aktuell sichtbare Bars durch.
+-- Performs follow-up updates for currently visible bars.
 local function RefreshVisibleBarState(sub, unit)
     sub:UpdateLabelVisibility(unit)
     if unit ~= "player" then
@@ -367,21 +363,21 @@ local function RefreshVisibleBarState(sub, unit)
     end
 end
 
--- Aktualisiert Bar-Sichtbarkeit und abhängige Zustände für den aktuellen Roster.
+-- Updates bar visibility and dependent state for the current roster.
 local function UpdateBarVisibility(self, unit)
     local show = ShouldShowBarForUnit(self, unit)
     self.bars[unit].frame:SetShown(show)
     if show then RefreshVisibleBarState(self, unit) end
 end
 
--- Gibt true zurück wenn Roster-Updates bis nach dem Kampf aufgeschoben werden müssen.
+-- Returns true if roster updates must be deferred until after combat.
 local function DeferRosterUpdateIfInCombat(self)
     if not CE.Combat.InCombatLockdown() then return false end
     self.rosterDirty = true
     return true
 end
 
--- Aktualisiert Sichtbarkeit für jede verwaltete Bar die aktuell existiert.
+-- Updates visibility for each managed bar that currently exists.
 local function UpdateAllBarVisibility(self)
     for _, unit in ipairs(UNITS) do
         local barData = self.bars[unit]
@@ -390,7 +386,7 @@ local function UpdateAllBarVisibility(self)
     end
 end
 
--- Wendet den Positions-Refresh an der für den aktuellen Roster-Modus nötig ist.
+-- Applies the position refresh required for the current roster mode.
 local function ApplyRosterPositionMode(self)
     local positionMode = self.db.profile.positionMode
     if positionMode == "anchored" then
@@ -398,41 +394,40 @@ local function ApplyRosterPositionMode(self)
         return
     end
     if positionMode == "suf" then
-        -- Auf nächsten Tick verschieben: SUFs eigener GROUP_ROSTER_UPDATE-Handler
-        -- hat möglicherweise noch nicht ausgeführt (gleicher Event-Tick, Reihenfolge undefiniert).
-        -- C_Timer.After(0) feuert nach allen Handlern des aktuellen Frames, daher sind
-        -- SUF-Frames dann garantiert erstellt/sichtbar.
+        -- Defer to the next tick: SUF's own GROUP_ROSTER_UPDATE handler may
+        -- not have run yet (same event tick, undefined ordering).
+        -- C_Timer.After(0) fires after all handlers of the current frame, so
+        -- SUF frames are guaranteed to be created/visible by then.
         self:ScheduleSUFPositions()
     end
 end
 
--- Event-Handler: delegiert an ApplyRosterUpdate.
+-- Event handler: delegates to ApplyRosterUpdate.
 function SUB:OnRosterUpdate()
     self:ApplyRosterUpdate()
 end
 
--- Aktualisiert Bar-Sichtbarkeit für alle Units.
--- Secure-Frames können SetShown nicht während des Kampf-Lockdowns aufrufen, daher
--- werden Updates via rosterDirty aufgeschoben bis der Kampf endet.
+-- Updates bar visibility for all units.
+-- Secure frames cannot call SetShown during combat lockdown, so updates are
+-- deferred via rosterDirty until combat ends.
 function SUB:ApplyRosterUpdate()
     if DeferRosterUpdateIfInCombat(self) then return end
     UpdateAllBarVisibility(self)
     ApplyRosterPositionMode(self)
 end
 
--------------------------------------------------------------------------------
--- Event-Glue: Taschen / Mana
+-- Event Glue: Bags / Mana
 -------------------------------------------------------------------------------
 
--- Event-Handler: delegiert an HandlePlayerPowerUpdate.
+-- Event handler: delegates to HandlePlayerPowerUpdate.
 function SUB:OnPlayerPowerUpdate(event, unit, powerType)
     self:HandlePlayerPowerUpdate(unit, powerType)
 end
 
--- Aktualisiert Cast-Count-Labels wenn sich das Spieler-Mana ändert.
--- UNIT_POWER_UPDATE feuert für jede Unit/Power; nur Spieler-Mana interessiert.
--- powerType ist eine Zahl (0 = Mana) in Retail/Cata+, oder ein String ("MANA") in Classic Era.
--- UNIT_MANA (Classic) feuert ohne powerType → powerType = nil, passt immer.
+-- Updates cast-count labels when the player's mana changes.
+-- UNIT_POWER_UPDATE fires for every unit/power; only player mana matters.
+-- powerType is a number (0 = mana) in Retail/Cata+, or a string ("MANA") in Classic Era.
+-- UNIT_MANA (Classic) fires without powerType → powerType = nil, which always matches.
 function SUB:HandlePlayerPowerUpdate(unit, powerType)
     if unit and unit ~= "player" then return end
     if powerType and powerType ~= 0 and powerType ~= "MANA" then return end
@@ -440,17 +435,17 @@ function SUB:HandlePlayerPowerUpdate(unit, powerType)
     self:UpdateAllCastCounts()
 end
 
--- Event-Handler: delegiert an HandleBagUpdate.
+-- Event handler: delegates to HandleBagUpdate.
 function SUB:OnBagUpdate()
     self:HandleBagUpdate()
 end
 
--- Aktualisiert Reagent- und Item-Count-Labels wenn sich der Tascheninhalt ändert.
+-- Updates reagent and item count labels when bag contents change.
 function SUB:HandleBagUpdate()
-    -- Custom Reagent-Count-Overlay (versteckt nativen LAB-Count für betroffene Buttons).
+    -- Custom reagent count overlay (hides native LAB count for affected buttons).
     self:UpdateAllReagentCounts()
-    -- Nativen LAB-Count für Spell-Buttons ohne custom Overlay aktualisieren.
-    -- LAB hört nicht auf BAG_UPDATE für spell-type Buttons.
+    -- Update native LAB count for spell buttons without the custom overlay.
+    -- LAB does not listen to BAG_UPDATE for spell-type buttons.
     ForEachButton(self.bars, RefreshNativeLABCount)
     if not self.db.profile.showCastCount then return end
     self:UpdateAllCastCounts()

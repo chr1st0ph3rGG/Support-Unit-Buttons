@@ -1,25 +1,23 @@
--------------------------------------------------------------------------------
 -- Core/Layout.lua
--- Bar-Layout, Label-Sichtbarkeit, Lock/Drag-Modifier
+-- Bar layout, label visibility, lock/drag modifier
 -------------------------------------------------------------------------------
 
-local _, SUB_NS = ...
-local SUB = LibStub("AceAddon-3.0"):GetAddon("SupportUnitButtons")
+local _, SUB_NS      = ...
+local SUB            = LibStub("AceAddon-3.0"):GetAddon("SupportUnitButtons")
 
-local CE = LibStub("C_Everywhere")
+local CE             = LibStub("C_Everywhere")
 
-local UNITS         = SUB_NS.UNITS
-local MAX_SHARED    = SUB_NS.MAX_SHARED
+local UNITS          = SUB_NS.UNITS
+local MAX_SHARED     = SUB_NS.MAX_SHARED
 local MAX_INDIVIDUAL = SUB_NS.MAX_INDIVIDUAL
-local SEPARATOR_GAP = SUB_NS.SEPARATOR_GAP
-local HANDLE_HEIGHT = SUB_NS.HANDLE_HEIGHT
+local SEPARATOR_GAP  = SUB_NS.SEPARATOR_GAP
+local HANDLE_HEIGHT  = SUB_NS.HANDLE_HEIGHT
 
--------------------------------------------------------------------------------
--- Button-Größe
+-- Button Size
 -------------------------------------------------------------------------------
 
--- Setzt die Größe eines Buttons. NormalTexture (leerer Slot-Rahmen) wird auf 1:1
--- gehalten, damit er nicht in benachbarte Buttons überlappt.
+-- Sets the size of a button. NormalTexture (empty slot frame) is kept at 1:1
+-- so it does not overlap adjacent buttons.
 function SUB:SizeButton(btn, size)
     btn:SetSize(size, size)
     local nt = btn:GetNormalTexture()
@@ -34,7 +32,7 @@ end
 -- Layout
 -------------------------------------------------------------------------------
 
--- Berechnet die Gesamtbreite einer Bar aus den Button-Einstellungen.
+-- Computes the total width of a bar from the button settings.
 function SUB:GetBarTotalWidth()
     local db = self.db.profile
     local sz = db.buttonSize
@@ -50,7 +48,7 @@ function SUB:GetBarTotalWidth()
     return math.max(w, sz)
 end
 
--- Repositioniert und skaliert alle Buttons einer Unit-Bar.
+-- Repositions and scales all buttons on a unit bar.
 function SUB:UpdateBarLayout(unit)
     local db      = self.db.profile
     local barData = self.bars[unit]
@@ -73,8 +71,8 @@ function SUB:UpdateBarLayout(unit)
         end
     end
 
-    -- Individual Buttons (mit Separator-Abstand nach der Shared-Sektion)
-    -- sN Shared-Buttons enden bei: (sN-1)*(sz+sp)+sz = sN*(sz+sp)-sp
+    -- Individual buttons (with separator spacing after the shared section)
+    -- sN shared buttons end at: (sN-1)*(sz+sp)+sz = sN*(sz+sp)-sp
     local sepX = (sN > 0) and (sN * (sz + sp) - sp + (db.separatorGap or SEPARATOR_GAP)) or 0
     for i = 1, MAX_INDIVIDUAL do
         local btn = barData.individualButtons[i]
@@ -92,12 +90,12 @@ function SUB:UpdateBarLayout(unit)
     self:UpdateLabelVisibility(unit)
 end
 
--- Wendet Layout-Größen/-Positionen auf alle Bars neu an.
+-- Reapplies layout sizes and positions to all bars.
 function SUB:UpdateAllLayouts()
     for _, unit in ipairs(UNITS) do
         self:UpdateBarLayout(unit)
     end
-    -- Positionen bei geänderter Bar-Größe neu anwenden
+    -- Reapply positions when the bar size changes.
     if self.db.profile.positionMode == "anchored" then
         self:ApplyAnchoredPositions()
     elseif self.db.profile.positionMode == "suf" then
@@ -106,8 +104,8 @@ function SUB:UpdateAllLayouts()
 end
 
 -------------------------------------------------------------------------------
--- Label-Sichtbarkeit
--- Labels werden gezeigt wenn: Bar entsperrt (immer) ODER showLabels-Option aktiv
+-- Label Visibility
+-- Labels are shown when: bar unlocked (always) OR showLabels option enabled
 -------------------------------------------------------------------------------
 
 function SUB:UpdateLabelVisibility(unit)
@@ -121,18 +119,17 @@ function SUB:UpdateLabelVisibility(unit)
     end
 end
 
--- Aktualisiert Label-Sichtbarkeit und -Text für alle Bars.
+-- Updates label visibility and text for all bars.
 function SUB:UpdateAllLabelVisibility()
     for _, unit in ipairs(UNITS) do
         self:UpdateLabelVisibility(unit)
     end
 end
 
--------------------------------------------------------------------------------
--- Leere Buttons
+-- Empty Buttons
 -------------------------------------------------------------------------------
 
--- Wendet die "Leere Slots anzeigen"-Einstellung auf alle Buttons an.
+-- Applies the "show empty slots" setting to all buttons.
 function SUB:ApplyShowEmptyButtonsOption()
     if CE.Combat.InCombatLockdown() then
         self.emptyButtonsDirty = true
@@ -157,14 +154,13 @@ function SUB:ApplyShowEmptyButtonsOption()
     end
 end
 
--- Speichert und wendet die Option "Leere Slots anzeigen" an.
+-- Stores and applies the "show empty slots" option.
 function SUB:SetShowEmptyButtons(show)
     self.db.profile.showEmptyButtons = show and true or false
     self:ApplyShowEmptyButtonsOption()
 end
 
--------------------------------------------------------------------------------
--- Drag-Modifier
+-- Drag Modifier
 -------------------------------------------------------------------------------
 
 local DRAG_MODIFIER_CHECK = {
@@ -174,7 +170,7 @@ local DRAG_MODIFIER_CHECK = {
     ALT   = function() return CE.Input.IsAltKeyDown() end,
 }
 
--- Setzt den Modifier-Key für Drag-Off auf allen Buttons.
+-- Sets the modifier key for drag-off on all buttons.
 function SUB:SetDragModifier(mod)
     self.db.profile.dragOffModifier = mod
     for _, unit in ipairs(UNITS) do
@@ -190,7 +186,7 @@ function SUB:SetDragModifier(mod)
     end
 end
 
--- Gibt true zurück wenn der konfigurierte Drag-Modifier gerade gehalten wird.
+-- Returns true if the configured drag modifier is currently held.
 function SUB:IsDragModifierHeld()
     local check = DRAG_MODIFIER_CHECK[self.db.profile.dragOffModifier]
     return check and check() or false

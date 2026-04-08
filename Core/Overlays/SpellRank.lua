@@ -1,6 +1,5 @@
--------------------------------------------------------------------------------
 -- Core/Overlays/SpellRank.lua
--- Text-Overlay: Spell-Rang
+-- Text overlay: spell rank
 -------------------------------------------------------------------------------
 
 local _, SUB_NS     = ...
@@ -22,7 +21,7 @@ local CORNER_OFFSET = {
     RIGHT       = { 3, 0 },
 }
 
--- Aktualisiert den Spell-Rang-Text für einen Button.
+-- Updates the spell rank text for a button.
 function SUB:UpdateButtonRankText(btn, btnType, action)
     local fs = btn.SUB_rankText
     if not fs then return end
@@ -49,7 +48,7 @@ function SUB:UpdateButtonRankText(btn, btnType, action)
     fs:SetText(num)
 end
 
--- Aktualisiert Rang-Texte für alle sichtbaren/zugewiesenen Buttons.
+-- Updates rank texts for all visible/assigned buttons.
 function SUB:UpdateAllRankTexts()
     for _, unit in ipairs(UNITS) do
         local bd = self.bars[unit]

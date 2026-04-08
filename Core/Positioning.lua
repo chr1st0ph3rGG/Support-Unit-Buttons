@@ -1,6 +1,5 @@
--------------------------------------------------------------------------------
 -- Core/Positioning.lua
--- Positions-Methoden für alle Unit-Bars
+-- Positioning methods for all unit bars
 -------------------------------------------------------------------------------
 
 local _, SUB_NS     = ...
@@ -10,11 +9,10 @@ local UNITS         = SUB_NS.UNITS
 local UNIT_INDEX    = SUB_NS.UNIT_INDEX
 local HANDLE_HEIGHT = SUB_NS.HANDLE_HEIGHT
 
--------------------------------------------------------------------------------
--- Positionierung
+-- Positioning
 -------------------------------------------------------------------------------
 
--- Gibt zurück, wie viele sichtbare Bars in der UNITS-Reihenfolge vor `unit` stehen.
+-- Returns how many visible bars appear before `unit` in UNITS order.
 function SUB:GetVisiblePrecedingCount(unit)
     local count = 0
     for _, u in ipairs(UNITS) do
@@ -27,7 +25,7 @@ function SUB:GetVisiblePrecedingCount(unit)
     return count
 end
 
--- "anchored"-Modus: alle sichtbaren Bars vom gespeicherten Ankerpunkt stapeln.
+-- "anchored" mode: stack all visible bars from the saved anchor point.
 function SUB:ApplyAnchoredPositions()
     local db   = self.db.profile
     local gap  = db.anchorGap
@@ -54,8 +52,8 @@ function SUB:ApplyAnchoredPositions()
     end
 end
 
--- Aktualisiert EnableMouse auf allen Drag-Handles basierend auf Lock-Status und Position-Modus.
--- Im "suf"-Modus folgen Bars den SUF-Frames, daher ist Ziehen immer deaktiviert.
+-- Updates EnableMouse on all drag handles based on lock state and position mode.
+-- In "suf" mode bars follow the SUF frames, so dragging is always disabled.
 function SUB:UpdateAllHandleInteractivity()
     local db = self.db.profile
     local canDrag = not db.locked and db.positionMode ~= "suf"
@@ -67,7 +65,7 @@ function SUB:UpdateAllHandleInteractivity()
     end
 end
 
--- Positioniert einen Bar-Frame anhand gespeicherter Koordinaten oder Standard-Stapeln.
+-- Positions a bar frame using saved coordinates or default stacking.
 local function SetBarPosition(frame, unit, saved, db)
     frame:ClearAllPoints()
     if saved.x and saved.y then
@@ -79,8 +77,8 @@ local function SetBarPosition(frame, unit, saved, db)
     end
 end
 
--- Stellt die Position einer Bar aus gespeicherten Koordinaten wieder her.
--- Überspringt "anchored"/"suf"-Modus (werden separat angewendet).
+-- Restores a bar position from saved coordinates.
+-- Skips "anchored"/"suf" mode (applied separately).
 function SUB:RestoreBarPosition(unit)
     local db      = self.db.profile
     local barData = self.bars[unit]
@@ -90,7 +88,7 @@ function SUB:RestoreBarPosition(unit)
     SetBarPosition(barData.frame, unit, db.bars[unit], db)
 end
 
--- Setzt alle gespeicherten Bar-Positionen zurück und wendet den aktiven Modus neu an.
+-- Resets all saved bar positions and reapplies the active mode.
 function SUB:ResetAllPositions()
     local db = self.db.profile
     for _, unit in ipairs(UNITS) do

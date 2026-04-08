@@ -14,17 +14,17 @@ SUB_NS.defaults = {
         separatorGap                 = 8,
         showPlayer                   = true,
         showPlayerOnlyInParty        = false,
-        showLabels                   = true,  -- show name labels while locked
-        showEmptyButtons             = true,  -- keep empty slots visible permanently
+        showLabels                   = true,       -- show name labels while locked
+        showEmptyButtons             = true,       -- keep empty slots visible permanently
         positionMode                 = "anchored", -- "free" | "anchored" | "suf"
         anchorDirection              = "vertical", -- "vertical" | "horizontal"
-        anchorGap                    = 4,     -- gap between bars in anchored mode (px)
-        anchorX                      = 10,    -- TOPLEFT x offset from UIParent in anchored mode
-        anchorY                      = -100,  -- TOPLEFT y offset from UIParent in anchored mode
-        sufAnchorSelf                = "LEFT",   -- anchor point on the SUB bar frame
-        sufAnchorTarget              = "RIGHT",  -- anchor point on the SUF party frame
-        sufOffsetX                   = 0,        -- horizontal pixel offset
-        sufOffsetY                   = 0,        -- vertical pixel offset
+        anchorGap                    = 4,          -- gap between bars in anchored mode (px)
+        anchorX                      = 10,         -- TOPLEFT x offset from UIParent in anchored mode
+        anchorY                      = -100,       -- TOPLEFT y offset from UIParent in anchored mode
+        sufAnchorSelf                = "LEFT",     -- anchor point on the SUB bar frame
+        sufAnchorTarget              = "RIGHT",    -- anchor point on the SUF party frame
+        sufOffsetX                   = 0,          -- horizontal pixel offset
+        sufOffsetY                   = 0,          -- vertical pixel offset
         bars                         = {
             ["*"] = { x = nil, y = nil },
         },
@@ -37,7 +37,7 @@ SUB_NS.defaults = {
         spellRankCorner              = "BOTTOMRIGHT",
         spellRankOffsetX             = -1,
         spellRankOffsetY             = 1,
-        showReagentCount             = true,  -- show custom reagent count overlay for reagent-based spells
+        showReagentCount             = true, -- show custom reagent count overlay for reagent-based spells
         reagentCountFont             = "2002 Bold",
         reagentCountFontSize         = 9,
         reagentCountColor            = { r = 1, g = 0.5, b = 0.0, a = 1 }, -- orange
@@ -48,19 +48,19 @@ SUB_NS.defaults = {
         showCastCount                = true, -- show casts-until-OOM (spells) or item count
         castCountFont                = "2002 Bold",
         castCountFontSize            = 9,
-        castCountSpellColor          = { r = 0.016, g = 0.980, b = 0.969, a = 1 }, -- blau für ZSUBer (#04FAF7)
-        castCountItemColor           = { r = 1, g = 0.8, b = 0.2, a = 1 },    -- gold für Items
+        castCountSpellColor          = { r = 0.016, g = 0.980, b = 0.969, a = 1 }, -- blue for casters (#04FAF7)
+        castCountItemColor           = { r = 1, g = 0.8, b = 0.2, a = 1 },         -- gold for items
         castCountOutline             = "OUTLINE",
         castCountCorner              = "TOPLEFT",
         castCountOffsetX             = 1,
         castCountOffsetY             = -1,
         dispelAlert                  = true,
         dispelAlertColor             = { r = 1.0, g = 0.0, b = 0.0 },
-        dispelAlertAlphaMin          = 0.0,     -- minimum opacity at animation trough (0 = full pulse)
-        dispelAlertAlphaMax          = 1.0,     -- maximum opacity at animation peak
-        dispelAlertPulseSpeed        = 2.5,     -- animation frequency multiplier
-        dispelAlertBorderWidth       = 0,       -- 0 = auto (6 % of button width), else manual px
-        dispelAlertPadding           = 3,       -- outset from button edge in px (negative = inset)
+        dispelAlertAlphaMin          = 0.0,      -- minimum opacity at animation trough (0 = full pulse)
+        dispelAlertAlphaMax          = 1.0,      -- maximum opacity at animation peak
+        dispelAlertPulseSpeed        = 2.5,      -- animation frequency multiplier
+        dispelAlertBorderWidth       = 0,        -- 0 = auto (6 % of button width), else manual px
+        dispelAlertPadding           = 3,        -- outset from button edge in px (negative = inset)
         dispelAlertShape             = "square", -- "square" | "circle"
         dispelAlertTypeColorsEnabled = false,
         dispelAlertColorMagic        = { r = 0.20, g = 0.60, b = 1.00 },
@@ -68,15 +68,15 @@ SUB_NS.defaults = {
         dispelAlertColorPoison       = { r = 0.00, g = 0.80, b = 0.20 },
         dispelAlertColorDisease      = { r = 0.80, g = 0.55, b = 0.10 },
         dispelAlertSoundEnabled      = false,
-        dispelAlertSound             = nil, -- LSM sound name; nil = kein Sound
+        dispelAlertSound             = nil, -- LSM sound name; nil = no sound
         dispelAlertSoundChannel      = "Master",
         showBuffStatus               = true,
         buffStatusCorner             = "BOTTOMLEFT",
         buffStatusFont               = "2002 Bold",
         buffStatusFontSize           = 9,
-        buffStatusColor              = { r = 1.0, g = 1.0, b = 0.0, a = 1 }, -- gelb
-        buffStatusLowColor           = { r = 1.0, g = 0.0, b = 0.0, a = 1 }, -- rot wenn unter Schwellwert
-        buffStatusLowThreshold       = 60,                              -- Sekunden
+        buffStatusColor              = { r = 1.0, g = 1.0, b = 0.0, a = 1 }, -- yellow
+        buffStatusLowColor           = { r = 1.0, g = 0.0, b = 0.0, a = 1 }, -- red when below threshold
+        buffStatusLowThreshold       = 60,                                   -- seconds
         buffStatusOutline            = "OUTLINE",
         buffStatusOffsetX            = 1,
         buffStatusOffsetY            = 1,
@@ -87,6 +87,6 @@ SUB_NS.defaults = {
         memberSlots = { ["*"] = {} },
     },
     global = {
-        buffSpells = {}, -- Zaubernamen die als Buff-Zauber bekannt sind (baut sich mit der Zeit auf)
+        buffSpells = {}, -- spell names known as buff spells (built up over time)
     },
 }

@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
 -- Core/Bars.lua
--- Bar- und Button-Erstellung, Secure-Script-Wrapping
+-- Bar and button creation, secure script wrapping
 -------------------------------------------------------------------------------
 
 local _, SUB_NS      = ...
@@ -19,15 +19,15 @@ local UNITS          = SUB_NS.UNITS
 -------------------------------------------------------------------------------
 -- Secure Script Wrapping
 --
--- In WoW Classic behandelt CastSpellByName(name, unit) jedes truthy zweite
--- Argument als Self-Cast-Flag. Deshalb behalten wir type="spell"/"item" für
--- korrektes LAB-Display, tauschen aber in PreClick kurz auf type="macro" mit
--- [@unit]-Conditional um, und stellen in PostClick wieder her.
+-- In WoW Classic, CastSpellByName(name, unit) treats any truthy second
+-- argument as a self-cast flag. Therefore we keep type="spell"/"item" for
+-- correct LAB display, but swap to type="macro" with a [@unit] conditional
+-- in PreClick and restore it in PostClick.
 -------------------------------------------------------------------------------
 
 local function WrapButtonForUnitTarget(header, btn)
     header:WrapScript(btn, "PreClick", [[
-        -- Ausführung blockieren wenn der Drag-Off-Modifier gehalten wird.
+        -- Block execution if the drag-off modifier is held.
         local mod  = self:GetAttribute("SUB_dragModifier") or "SHIFT"
         local held = (mod == "SHIFT" and IsShiftKeyDown())
                   or (mod == "CTRL"  and IsControlKeyDown())
@@ -38,7 +38,7 @@ local function WrapButtonForUnitTarget(header, btn)
             self:SetAttribute("type", "empty")
             return
         end
-        -- Unit-targeted Macro-Tausch.
+        -- Unit-targeted macro swap.
         local macro = self:GetAttribute("SUB_macro")
         if macro then
             self:SetAttribute("SUB_savedtype", self:GetAttribute("type"))
@@ -60,8 +60,8 @@ local function WrapButtonForUnitTarget(header, btn)
         end
     ]])
 
-    -- Drag-Off blockieren wenn der Modifier nicht gehalten wird, indem
-    -- LABdisableDragNDrop vor LABs eigenem OnDragStart gesetzt wird.
+    -- Block drag-off when the modifier is not held by setting
+    -- LABdisableDragNDrop before LAB's own OnDragStart.
     header:WrapScript(btn, "OnDragStart", [[
         local mod  = self:GetAttribute("SUB_dragModifier") or "SHIFT"
         local held = (mod == "SHIFT" and IsShiftKeyDown())
@@ -71,21 +71,21 @@ local function WrapButtonForUnitTarget(header, btn)
         if held then
             self:SetAttribute("LABdisableDragNDrop", nil)
         else
-            return false  -- Drag blockieren ohne LABdisableDragNDrop (das auch OnReceiveDrag blockiert)
+            return false  -- block drag without LABdisableDragNDrop (which would also block OnReceiveDrag)
         end
     ]])
 
-    -- LABs eingebautes Range-Coloring nutzt FindSpellBookSlotBySpellID, das in
-    -- WoW Classic nicht existiert. IsUnitInRange auf der Instanz überschreiben,
-    -- damit LABs Range-Timer die Classic-API (IsSpellInRange by Name) verwendet.
-    -- Spell-Name statt ID übergeben: vermeidet den fehleranfälligen
-    -- LibSpellRange-Spellbook-Slot-Lookup der in Classic nil zurückgeben kann.
-    -- nil von IsSpellInRange bedeutet "Spell kann dieses Target nicht targetieren"
-    -- (z.B. Self-Only-Spells auf Party-Member) → kein Range-Coloring (kein Fallback auf 0).
+    -- LAB's built-in range coloring uses FindSpellBookSlotBySpellID, which does
+    -- not exist in WoW Classic. Override IsUnitInRange on the instance so LAB's
+    -- range timer uses the Classic API (IsSpellInRange by name).
+    -- Pass the spell name instead of the ID: avoids the error-prone
+    -- LibSpellRange spellbook slot lookup that can return nil in Classic.
+    -- nil from IsSpellInRange means "spell cannot target this unit type"
+    -- (e.g. self-only spells on party members) → no range coloring (no fallback to 0).
     btn.IsUnitInRange = function(self, unit)
         if self._state_type == "spell" and unit then
             if CE.Unit.UnitExists(unit) and not CE.Unit.UnitIsConnected(unit) then
-                return 0 -- offline = außer Reichweite
+                return 0 -- offline = out of range
             end
             local info = CE.Spell.GetSpellInfo(self._state_action)
             local name = info and info.name
@@ -98,9 +98,9 @@ end
 -------------------------------------------------------------------------------
 -- Text-Overlay Attachment
 --
--- Erzeugt einen Child-Frame als Host für Button-Text-Overlays.
--- Als Child-Frame mit höherem FrameLevel rendert er immer über Masques
--- HIGHLIGHT-Layer-Hover-Rahmen auf dem Parent-Button.
+-- Creates a child frame as host for button text overlays.
+-- As a child frame with a higher FrameLevel it always renders above Masque's
+-- HIGHLIGHT-layer hover border on the parent button.
 -------------------------------------------------------------------------------
 
 local function GetOrCreateTextOverlay(btn)
@@ -112,7 +112,7 @@ local function GetOrCreateTextOverlay(btn)
     return ov
 end
 
--- Fügt einen Rang-Text-FontString an einen Button an (Ecke wird bei Update gesetzt).
+-- Attaches a rank text FontString to a button (corner is set on update).
 local function AttachRankText(btn)
     local fs = GetOrCreateTextOverlay(btn):CreateFontString(nil, "OVERLAY")
     fs:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
@@ -120,7 +120,7 @@ local function AttachRankText(btn)
     btn.SUB_rankText = fs
 end
 
--- Fügt einen Cast-Count-FontString an einen Button an.
+-- Attaches a cast count FontString to a button.
 local function AttachCastCountText(btn)
     local fs = GetOrCreateTextOverlay(btn):CreateFontString(nil, "OVERLAY")
     fs:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
@@ -128,7 +128,7 @@ local function AttachCastCountText(btn)
     btn.SUB_castCountText = fs
 end
 
--- Fügt einen Reagent-Count-FontString an einen Button an.
+-- Attaches a reagent count FontString to a button.
 local function AttachReagentCountText(btn)
     local fs = GetOrCreateTextOverlay(btn):CreateFontString(nil, "OVERLAY")
     fs:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
@@ -136,7 +136,7 @@ local function AttachReagentCountText(btn)
     btn.SUB_reagentCountText = fs
 end
 
--- Fügt einen Buff-Status-FontString an einen Button an.
+-- Attaches a buff status FontString to a button.
 local function AttachBuffStatusText(btn)
     local fs = GetOrCreateTextOverlay(btn):CreateFontString(nil, "OVERLAY")
     fs:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
@@ -145,29 +145,29 @@ local function AttachBuffStatusText(btn)
 end
 
 -------------------------------------------------------------------------------
--- Bar-Erstellung
+-- Bar Creation
 -------------------------------------------------------------------------------
 
--- Erstellt Bars für alle verwalteten Units.
+-- Creates bars for all managed units.
 function SUB:CreateAllBars()
     for _, unit in ipairs(UNITS) do
         self:CreateBar(unit)
     end
 end
 
--- Erstellt eine vollständige Unit-Bar mit Secure-Header und allen Buttons.
+-- Creates a complete unit bar with secure header and all buttons.
 function SUB:CreateBar(unit)
     local db    = self.db.profile
     local uIdx  = UNIT_INDEX[unit]
     local fn    = "SupportUnitButtonsFrame_" .. unit
 
-    ---------- äußerer beweglicher Frame ----------
+    ---------- outer movable frame ----------
     local frame = CreateFrame("Frame", fn, UIParent)
     frame:SetFrameStrata("MEDIUM")
     frame:SetClampedToScreen(true)
     frame:SetMovable(true)
 
-    ---------- Drag Handle (sitzt oben, über allen Buttons) ----------
+    ---------- Drag Handle (sits above all buttons) ----------
     local handle = CreateFrame("Frame", fn .. "_Handle", frame)
     handle:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     handle:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
@@ -183,7 +183,7 @@ function SUB:CreateBar(unit)
     local label = handle:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     label:SetPoint("LEFT", handle, "LEFT", 4, 0)
 
-    -- Drag-Scripts werden nach barData-Erstellung gesetzt (brauchen Selbstreferenz)
+    -- Drag scripts are set after barData creation (need self-reference)
     handle:SetScript("OnDragStart", function()
         frame:StartMoving()
     end)
@@ -191,19 +191,19 @@ function SUB:CreateBar(unit)
         frame:StopMovingOrSizing()
         local ddb = self.db.profile
 
-        -- SUF-Modus: zurück zum SUF-Anker snappen (Bars sind nicht frei ziehbar).
+        -- SUF mode: snap back to SUF anchor (bars are not freely movable).
         if ddb.positionMode == "suf" then
             self:ApplySUFPositions()
             return
         end
 
         local sc = frame:GetEffectiveScale() / UIParent:GetEffectiveScale()
-        -- x/y gespeichert als TOPLEFT-Offset von UIParent TOPLEFT
+        -- x/y stored as TOPLEFT offset from UIParent TOPLEFT
         local fx = frame:GetLeft() * sc
         local fy = frame:GetTop() * sc - UIParent:GetHeight()
 
         if ddb.positionMode == "anchored" then
-            -- Anker zurückrechnen (Position von Bar #0)
+            -- Back-calculate anchor (position of Bar #0)
             local barH = HANDLE_HEIGHT + ddb.buttonSize
             local barW = self:GetBarTotalWidth()
             local gap  = ddb.anchorGap
@@ -247,7 +247,7 @@ function SUB:CreateBar(unit)
 
     for i = 1, MAX_SHARED do
         local btn = LAB:CreateButton(base + i, fn .. "_S" .. i, header, nil)
-        btn:SetState(0, "empty", nil) -- "type"-Attribut initialisieren damit OnReceiveDrag funktioniert
+        btn:SetState(0, "empty", nil) -- initialise "type" attribute so OnReceiveDrag works
         btn:SetAttribute("unit", unit)
         btn:SetAttribute("SUB_dragModifier", dragMod)
         btn.SUB_unit    = unit
@@ -279,7 +279,7 @@ function SUB:CreateBar(unit)
         self:RegisterMasqueButton(btn)
         barData.individualButtons[i] = btn
     end
-    -- Restore via RefreshIndividualButtons damit die Clear+Restore-Logik geteilt wird.
+    -- Restore via RefreshIndividualButtons so the clear+restore logic is shared.
     self:RefreshIndividualButtons(unit)
 
     self:UpdateBarLayout(unit)

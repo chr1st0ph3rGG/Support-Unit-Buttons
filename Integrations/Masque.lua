@@ -1,6 +1,5 @@
--------------------------------------------------------------------------------
 -- Integrations/Masque.lua
--- Masque-Integration: Button-Skinning, Options-Block
+-- Masque integration: button skinning, options block
 -------------------------------------------------------------------------------
 
 local _, SUB_NS = ...
@@ -9,25 +8,24 @@ local SUB       = LibStub("AceAddon-3.0"):GetAddon("SupportUnitButtons")
 local AceCfgD   = LibStub("AceConfigDialog-3.0")
 local Masque    = LibStub("Masque", true)
 
--------------------------------------------------------------------------------
--- Öffentliche Integrations-Methoden
+-- Public Integration Methods
 -------------------------------------------------------------------------------
 
--- Erstellt die Masque-Gruppe für alle SUB-Buttons (einmalig in OnInitialize).
+-- Creates the Masque group for all SUB buttons (once in OnInitialize).
 function SUB:InitializeMasque()
     if Masque then
         self.masqueGroup = Masque:Group("SupportUnitButtons", "Buttons")
     end
 end
 
--- Registriert einen Button in der Masque-Gruppe, falls Masque geladen ist.
+-- Registers a button in the Masque group if Masque is loaded.
 function SUB:RegisterMasqueButton(btn)
     if self.masqueGroup then
         self.masqueGroup:AddButton(btn)
     end
 end
 
--- Gibt den AceConfig-Block für die Masque-Skin-Optionen zurück.
+-- Returns the AceConfig block for the Masque skin options.
 function SUB:GetMasqueOptionsGroup()
     local L = LibStub("AceLocale-3.0"):GetLocale("SupportUnitButtons")
     return {
@@ -49,7 +47,7 @@ function SUB:GetMasqueOptionsGroup()
                 order    = 1,
                 disabled = function() return not Masque end,
                 func     = function()
-                    -- Masques lazy options load auslösen falls noch nicht geschehen
+                    -- Trigger Masque's lazy options load if it has not happened yet.
                     local ldr = _G["MSQ_LDR_FRAME"]
                     if ldr then
                         local fn = ldr:GetScript("OnShow")

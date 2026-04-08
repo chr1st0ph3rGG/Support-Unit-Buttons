@@ -1,27 +1,27 @@
 -------------------------------------------------------------------------------
 -- Core/Dispel.lua
--- Dispel-Alert-System: farbige Rahmen auf Buttons deren Spell einen aktiven
--- Debuff des Bar-Targets dispellen kann.
+-- Dispel alert system: colored borders on buttons whose spell can dispel an
+-- active debuff from the bar target.
 --
--- Vier opake Rand-Streifen ersetzen den semi-transparenten IconAlertAnts-Sprite,
--- damit der Highlight immer klar sichtbar ist (unabhängig vom Button-Icon oder
--- Masque-Skin).  Alternativ: kreisförmiger Ring-Texture-Modus.
+-- Four opaque border strips replace the semi-transparent IconAlertAnts sprite,
+-- so the highlight is always clearly visible (regardless of button icon or
+-- Masque skin).  Alternative: circular ring texture mode.
 --
--- Spell→Debuff-Typ-Mapping deckt Classic, TBC, Wrath, Cata und Retail ab.
--- Name-basiertes Lookup (erstellt nach SPELLS_CHANGED) behandelt alle Spellränge
--- in Classic ohne jeden Rang-ID einzeln auflisten zu müssen.
+-- Spell→debuff-type mapping covers Classic, TBC, Wrath, Cata, and Retail.
+-- Name-based lookup (built after SPELLS_CHANGED) handles all spell ranks in
+-- Classic without needing to list every rank ID individually.
 -------------------------------------------------------------------------------
 
-local _, SUB_NS = ...
-local SUB = LibStub("AceAddon-3.0"):GetAddon("SupportUnitButtons")
+local _, SUB_NS        = ...
+local SUB              = LibStub("AceAddon-3.0"):GetAddon("SupportUnitButtons")
 
-local CE  = LibStub("C_Everywhere")
-local LSM = LibStub("LibSharedMedia-3.0")
+local CE               = LibStub("C_Everywhere")
+local LSM              = LibStub("LibSharedMedia-3.0")
 
-local UNITS          = SUB_NS.UNITS
-local DISPEL_ID_TYPES = SUB_NS.DISPEL_ID_TYPES
+local UNITS            = SUB_NS.UNITS
+local DISPEL_ID_TYPES  = SUB_NS.DISPEL_ID_TYPES
 
--- Mappt Debuff-Typ-Namen auf ihren Farb-Key im DB-Profil.
+-- Maps debuff type names to their color key in the DB profile.
 local DEBUFF_COLOR_KEY = {
     Magic   = "dispelAlertColorMagic",
     Curse   = "dispelAlertColorCurse",
@@ -29,8 +29,8 @@ local DEBUFF_COLOR_KEY = {
     Disease = "dispelAlertColorDisease",
 }
 
--- Gibt die Farb-Table für einen Dispel-Alert zurück.
--- Respektiert die Per-Debuff-Typ-Farbeinstellung wenn aktiviert.
+-- Returns the color table for a dispel alert.
+-- Respects the per-debuff-type color setting when enabled.
 local function GetDispelColor(db, debuffType)
     if db.dispelAlertTypeColorsEnabled and debuffType then
         local key = DEBUFF_COLOR_KEY[debuffType]
@@ -39,11 +39,11 @@ local function GetDispelColor(db, debuffType)
     return db.dispelAlertColor
 end
 
--- Spell-Name → { DebuffType = true }.  Wird nach SPELLS_CHANGED aufgebaut,
--- damit alle Ränge eines Multi-Rang-Classic-Spells automatisch matchen.
+-- Spell name → { DebuffType = true }.  Built after SPELLS_CHANGED so that
+-- all ranks of a multi-rank Classic spell are matched automatically.
 local dispelNameTypes = {}
 
--- Baut die Spell-Name-Dispel-Map aus der statischen Spell-ID-Mapping-Tabelle.
+-- Builds the spell-name dispel map from the static spell-ID mapping table.
 function SUB:BuildDispelNameTypes()
     for id, types in pairs(DISPEL_ID_TYPES) do
         local info = CE.Spell.GetSpellInfo(id)
@@ -56,8 +56,8 @@ function SUB:BuildDispelNameTypes()
     end
 end
 
--- Löst `action` (Spell-ID oder Name-String) auf seine Dispel-Typ-Table auf, oder nil.
--- Versucht zuerst direktes ID-Lookup; fällt auf Name-Map zurück für Multi-Rang-Classic-Spells.
+-- Resolves `action` (spell ID or name string) to its dispel type table, or nil.
+-- Tries direct ID lookup first; falls back to the name map for multi-rank Classic spells.
 local function GetDispelTypesByAction(action)
     local id = tonumber(action)
     if id and DISPEL_ID_TYPES[id] then return DISPEL_ID_TYPES[id] end
@@ -65,7 +65,7 @@ local function GetDispelTypesByAction(action)
     return info and dispelNameTypes[info.name]
 end
 
--- Gibt die Dispel-Typ-Table für den Spell auf `btn` zurück, oder nil.
+-- Returns the dispel type table for the spell on `btn`, or nil.
 local function GetButtonDispelTypes(btn)
     if btn._state_type ~= "spell" then return nil end
     local action = btn._state_action
@@ -73,7 +73,7 @@ local function GetButtonDispelTypes(btn)
     return GetDispelTypesByAction(action)
 end
 
--- Gibt den ersten Dispel-Typ aus der Map zurück (für Options-Preview).
+-- Returns the first dispel type from the map (for options preview).
 local function GetPreviewDispelType(types)
     for t in pairs(types) do
         return t
@@ -81,8 +81,8 @@ local function GetPreviewDispelType(types)
     return nil
 end
 
--- Iteriert bis zu 40 schädliche Auren auf `unit` und gibt den Debuff-Typ
--- des ersten Treffers zurück dessen Typ in `types` vorhanden ist, oder nil.
+-- Iterates up to 40 harmful auras on `unit` and returns the debuff type
+-- of the first match whose type is present in `types`, or nil.
 local function FindDispellableAura(unit, types)
     for i = 1, 40 do
         local name, _, _, debuffType = CE.Unit.UnitAura(unit, i, "HARMFUL")
@@ -91,13 +91,13 @@ local function FindDispellableAura(unit, types)
     end
 end
 
--- Gibt den ersten dispelbaren Debuff-Typ auf `unit` zurück, oder nil.
+-- Returns the first dispellable debuff type on `unit`, or nil.
 local function GetUnitDispelType(unit, types)
     if not unit or not CE.Unit.UnitExists(unit) then return nil end
     return FindDispellableAura(unit, types)
 end
 
--- Ankert und layert das Dispel-Overlay relativ zum Button mit Padding.
+-- Anchors and layers the dispel overlay relative to the button with padding.
 local function PositionDispelOverlay(btn, ov, pad)
     local baseLevel = btn:GetFrameLevel()
     if btn.SUB_textOverlay then
@@ -109,7 +109,7 @@ local function PositionDispelOverlay(btn, ov, pad)
     ov:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", pad, -pad)
 end
 
--- Gibt das Dispel-Alert-Overlay für `btn` zurück (lazy erstellt).
+-- Returns the dispel alert overlay for `btn` (lazily created).
 local function GetOrCreateDispelOverlay(btn)
     if btn.SUB_dispelOverlay then return btn.SUB_dispelOverlay end
     local ov = CreateFrame("Frame", nil, btn)
@@ -120,28 +120,28 @@ local function GetOrCreateDispelOverlay(btn)
         t:SetTexture([[Interface\Buttons\WHITE8X8]])
         return t
     end
-    ov.eT = makeStrip() -- oben
-    ov.eB = makeStrip() -- unten
-    ov.eL = makeStrip() -- links
-    ov.eR = makeStrip() -- rechts
+    ov.eT = makeStrip() -- top
+    ov.eB = makeStrip() -- bottom
+    ov.eL = makeStrip() -- left
+    ov.eR = makeStrip() -- right
 
-    -- Kreis-Modus: einzelne vorgerenderte Ring-Texture (weißer Ring auf transparentem
-    -- Hintergrund), bei Runtime via SetVertexColor eingefärbt.
+    -- Circle mode: single pre-rendered ring texture (white ring on transparent
+    -- background), colored at runtime via SetVertexColor.
     ov.eRing = ov:CreateTexture(nil, "OVERLAY")
     ov.eRing:SetTexture([[Interface\AddOns\SupportUnitButtons\Textures\circle_ring]])
     ov.eRing:SetAllPoints(ov)
     ov.eRing:Hide()
 
-    -- Animation pro Texture, nicht pro Frame. Frame:SetAlpha() würde den gesamten
-    -- rechteckigen Frame-Bereich (inkl. leere Bereiche) in einen Offscreen-Buffer
-    -- compositen → sichtbares transparentes Rechteck über dem Button-Icon.
+    -- Animation per texture, not per frame. Frame:SetAlpha() would composite the
+    -- entire rectangular frame area (including empty regions) into an offscreen
+    -- buffer → visible transparent rectangle over the button icon.
     ov._t = 0
     ov:SetScript("OnUpdate", function(self, elapsed)
         self._t        = self._t + elapsed
         local speed    = SUB.db and SUB.db.profile.dispelAlertPulseSpeed or 2.5
         local alphaMin = SUB.db and SUB.db.profile.dispelAlertAlphaMin or 0.0
         local alphaMax = SUB.db and SUB.db.profile.dispelAlertAlphaMax or 1.0
-        -- Glatte Kosinus-Oszillation: Phase läuft 0 → 1 → 0 ohne Totzeit.
+        -- Smooth cosine oscillation: phase runs 0 → 1 → 0 without dead time.
         local phase    = (1 - math.cos(self._t * math.pi * speed)) / 2
         local a        = alphaMin + (alphaMax - alphaMin) * phase
         self.eT:SetAlpha(a)
@@ -155,14 +155,14 @@ local function GetOrCreateDispelOverlay(btn)
     return ov
 end
 
--- Versteckt das Dispel-Overlay auf einem Button.
+-- Hides the dispel overlay on a button.
 local function HideDispelOverlay(btn)
     if btn.SUB_dispelOverlay then
         btn.SUB_dispelOverlay:Hide()
     end
 end
 
--- Rendert den kreisförmigen Alert-Stil (nur Ring-Texture).
+-- Renders the circular alert style (ring texture only).
 local function ShowCircleOverlay(ov, col)
     ov.eT:Hide()
     ov.eB:Hide()
@@ -172,7 +172,7 @@ local function ShowCircleOverlay(ov, col)
     ov.eRing:Show()
 end
 
--- Rendert den quadratischen Alert-Stil (vier Rand-Streifen).
+-- Renders the square alert style (four border strips).
 local function ShowSquareOverlay(ov, bw)
     ov.eRing:Hide()
 
@@ -201,10 +201,10 @@ local function ShowSquareOverlay(ov, bw)
     ov.eR:Show()
 end
 
--- Wendet visuelle Konfiguration (Padding, Farbe, Form, Rahmenstärke) an und zeigt Overlay.
+-- Applies visual configuration (padding, color, shape, border width) and shows overlay.
 local function ConfigureDispelOverlay(sub, btn, ov, foundType)
-    -- dispelAlertPadding: positiv = erweitert über den Button-Rand hinaus,
-    -- negativ = nach innen versetzt.
+    -- dispelAlertPadding: positive = extends beyond button edge,
+    -- negative = inset inward.
     local db = sub.db.profile
     local pad = db.dispelAlertPadding
     if pad == nil then pad = 3 end
@@ -215,7 +215,7 @@ local function ConfigureDispelOverlay(sub, btn, ov, foundType)
     local bwCfg = db.dispelAlertBorderWidth or 0
     local bw = bwCfg > 0 and bwCfg or math.max(2, math.floor(btn:GetWidth() * 0.06))
 
-    -- Quadrat-Modus Streifen einfärben; Ring-Modus wird in seinem Zweig eingefärbt.
+    -- Color square-mode strips; ring mode is colored in its own branch.
     for _, s in ipairs({ ov.eT, ov.eB, ov.eL, ov.eR }) do
         s:SetVertexColor(col.r, col.g, col.b, 1)
     end
@@ -229,7 +229,7 @@ local function ConfigureDispelOverlay(sub, btn, ov, foundType)
     ov:Show()
 end
 
--- Löst den passenden Dispel-Typ für diesen Button im Preview- oder Live-Modus auf.
+-- Resolves the matching dispel type for this button in preview or live mode.
 local function ResolveButtonDispelType(sub, btn, types)
     if sub.dispelAlertPreview then
         return GetPreviewDispelType(types)
@@ -237,7 +237,7 @@ local function ResolveButtonDispelType(sub, btn, types)
     return GetUnitDispelType(btn.SUB_unit, types)
 end
 
--- Zeigt oder versteckt das Dispel-Alert-Overlay für einen einzelnen Button.
+-- Shows or hides the dispel alert overlay for a single button.
 function SUB:UpdateDispelHighlight(btn)
     if not self.db.profile.dispelAlert then
         HideDispelOverlay(btn)
@@ -260,8 +260,8 @@ function SUB:UpdateDispelHighlight(btn)
     ConfigureDispelOverlay(self, btn, ov, foundType)
 end
 
--- Aktualisiert Dispel-Highlights für alle Buttons in `buttons` und gibt true zurück
--- wenn irgendein Overlay aktuell angezeigt wird.
+-- Updates dispel highlights for all buttons in `buttons` and returns true
+-- if any overlay is currently shown.
 local function UpdateButtonListAndCheckActive(self, buttons)
     local anyActive = false
     for _, btn in ipairs(buttons) do
@@ -273,8 +273,8 @@ local function UpdateButtonListAndCheckActive(self, buttons)
     return anyActive
 end
 
--- Aktualisiert Dispel-Highlights für alle Buttons der Bar von `unit` und
--- aktualisiert dispelActiveUnits entsprechend.
+-- Updates dispel highlights for all buttons on `unit`'s bar and
+-- updates dispelActiveUnits accordingly.
 function SUB:UpdateDispelHighlightsForUnit(unit)
     local bd = self.bars[unit]
     if not bd then return end
@@ -284,19 +284,19 @@ function SUB:UpdateDispelHighlightsForUnit(unit)
     return a or b
 end
 
--- Aktualisiert alle Buttons auf allen Bars.
+-- Updates all buttons on all bars.
 function SUB:UpdateAllDispelHighlights()
     for _, unit in ipairs(UNITS) do
         self:UpdateDispelHighlightsForUnit(unit)
     end
 end
 
--- Event-Handler: delegiert an HandleUnitAura.
+-- Event handler: delegates to HandleUnitAura.
 function SUB:OnUnitAura(event, unit)
     self:HandleUnitAura(unit)
 end
 
--- Aktualisiert Dispel-Highlights und Buff-Status wenn sich Auren einer Unit ändern.
+-- Updates dispel highlights and buff status when a unit's auras change.
 function SUB:HandleUnitAura(unit)
     if self.db.profile.dispelAlert then
         local wasActive = self.dispelActiveUnits[unit]
@@ -310,7 +310,7 @@ function SUB:HandleUnitAura(unit)
     end
 end
 
--- Spielt den Warn-Sound wenn aktiviert und ein Sound ausgewählt ist.
+-- Plays the alert sound if enabled and a sound is selected.
 function SUB:PlayDispelAlertSound()
     local db = self.db.profile
     if not db.dispelAlertSoundEnabled then return end

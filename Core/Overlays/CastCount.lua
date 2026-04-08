@@ -1,6 +1,5 @@
--------------------------------------------------------------------------------
 -- Core/Overlays/CastCount.lua
--- Text-Overlay: Cast-Count (Spell-Casts mit aktuellem Mana / Item-Menge)
+-- Text overlay: cast count (spell casts with current mana / item count)
 -------------------------------------------------------------------------------
 
 local _, SUB_NS     = ...
@@ -22,14 +21,14 @@ local CORNER_OFFSET = {
     RIGHT       = { 3, 0 },
 }
 
--- Durchsucht `costTable` nach einem Mana-Eintrag (type == 0) und gibt die Kosten zurück.
+-- Scans `costTable` for a mana entry (type == 0) and returns the cost.
 local function FindManaCostEntry(costTable)
     for _, entry in ipairs(costTable) do
         if entry.type == 0 then return entry.cost end
     end
 end
 
--- Gibt die Mana-Kosten von `spellId` zurück, oder nil wenn nicht verfügbar.
+-- Returns the mana cost of `spellId`, or nil if unavailable.
 local function GetSpellManaCost(spellId)
     local getCost = CE.Spell.GetSpellPowerCost
     if not getCost then return nil end
@@ -38,7 +37,7 @@ local function GetSpellManaCost(spellId)
     return FindManaCostEntry(costTable)
 end
 
--- Gibt zurück wie oft der Spell mit aktuellem Mana gecastet werden kann, oder nil.
+-- Returns how many times the spell can be cast with current mana, or nil.
 local function GetSpellCastCount(action)
     local id = tonumber(action)
     if not id then return nil end
@@ -48,21 +47,21 @@ local function GetSpellCastCount(action)
     return math.floor(currentMana / manaCost)
 end
 
--- Gibt die Item-Menge in den Taschen zurück, oder nil.
+-- Returns the item count in the bags, or nil.
 local function GetItemCastCount(action)
     local id = action and tonumber(action:match("item:(%d+)"))
     if not id or not GetItemCount then return nil end
     return GetItemCount(id)
 end
 
--- Verteilt Cast-Count-Lookup nach Aktionstyp (spell oder item).
+-- Dispatches cast-count lookup by action type (spell or item).
 local function GetCastCountValue(btnType, action)
     if btnType == "spell" then return GetSpellCastCount(action) end
     if btnType == "item" then return GetItemCastCount(action) end
     return nil
 end
 
--- Aktualisiert den Cast-Count-Text (Spell-Casts oder Item-Menge) für einen Button.
+-- Updates the cast count text (spell casts or item count) for a button.
 function SUB:UpdateButtonCastCount(btn, btnType, action)
     local fs = btn.SUB_castCountText
     if not fs then return end
@@ -90,7 +89,7 @@ function SUB:UpdateButtonCastCount(btn, btnType, action)
     fs:SetText(tostring(count))
 end
 
--- Aktualisiert Cast-Count-Labels auf allen Bars.
+-- Updates cast count labels on all bars.
 function SUB:UpdateAllCastCounts()
     for _, unit in ipairs(UNITS) do
         local bd = self.bars[unit]

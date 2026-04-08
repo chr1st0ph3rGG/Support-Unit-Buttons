@@ -1,9 +1,8 @@
--------------------------------------------------------------------------------
 -- Core/Overlays/ReagentCount.lua
--- Text-Overlay: Reagent-Count (Cast-Anzahl für Reagenz-basierte Spells)
+-- Text overlay: reagent count (cast count for reagent-based spells)
 --
--- Ersetzt den nativen LAB-Count für betroffene Buttons, damit er in einer
--- frei konfigurierbaren Ecke platziert werden kann.
+-- Replaces the native LAB count for affected buttons so it can be placed in a
+-- freely configurable corner.
 -------------------------------------------------------------------------------
 
 local _, SUB_NS = ...
@@ -24,7 +23,7 @@ local CORNER_OFFSET = {
     RIGHT       = { 3, 0 },
 }
 
--- Stellt den nativen LAB-Count für einen Button wieder her.
+-- Restores the native LAB count for a button.
 function SUB:RestoreNativeCount(btn)
     if btn.SUB_reagentCountHidden and btn.Count then
         btn.Count:Show()
@@ -32,7 +31,7 @@ function SUB:RestoreNativeCount(btn)
     end
 end
 
--- Gibt die Cast-Anzahl für einen Reagenz-Spell zurück, oder nil wenn Overlay deaktiviert.
+-- Returns the cast count for a reagent spell, or nil if the overlay is disabled.
 local function GetReagentDisplayCount(btn, btnType, action, db)
     if not db or not db.showReagentCount then return nil end
     if btnType ~= "spell" or not action then return nil end
@@ -41,7 +40,7 @@ local function GetReagentDisplayCount(btn, btnType, action, db)
 end
 
 local function ApplyReagentCountStyle(fs, btn, db, count)
-    -- Nativen LAB-Count verstecken und custom Overlay anzeigen.
+    -- Hide the native LAB count and show the custom overlay.
     if btn.Count and not btn.SUB_reagentCountHidden then
         btn.Count:Hide()
         btn.SUB_reagentCountHidden = true
@@ -58,7 +57,7 @@ local function ApplyReagentCountStyle(fs, btn, db, count)
     fs:SetText(tostring(count))
 end
 
--- Aktualisiert das custom Reagent-Count-Overlay für einen Button.
+-- Updates the custom reagent count overlay for a button.
 function SUB:UpdateButtonReagentCount(btn, btnType, action)
     local fs = btn.SUB_reagentCountText
     if not fs then return end
@@ -72,7 +71,7 @@ function SUB:UpdateButtonReagentCount(btn, btnType, action)
     ApplyReagentCountStyle(fs, btn, db, count)
 end
 
--- Aktualisiert Reagent-Count-Overlays auf allen Bars.
+-- Updates reagent count overlays on all bars.
 function SUB:UpdateAllReagentCounts()
     for _, unit in ipairs(UNITS) do
         local bd = self.bars[unit]

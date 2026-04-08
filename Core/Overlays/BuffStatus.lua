@@ -1,10 +1,9 @@
--------------------------------------------------------------------------------
 -- Core/Overlays/BuffStatus.lua
--- Text-Overlay: Buff-Status (verbleibende Dauer / Inaktiv-Indikator)
+-- Text overlay: buff status (remaining duration / inactive indicator)
 --
--- Zeigt die verbleibende Buff-Dauer in der Button-Ecke wenn der Spell des
--- Buttons als Buff auf dem Target aktiv ist.  Zeigt "-" wenn der Buff inaktiv.
--- Wird via UNIT_AURA-Events und einen Sekunden-Ticker aktualisiert.
+-- Shows the remaining buff duration in the button corner when the button's
+-- spell is active as a buff on the target. Shows "-" when the buff is inactive.
+-- Updated via UNIT_AURA events and a one-second ticker.
 -------------------------------------------------------------------------------
 
 local _, SUB_NS     = ...
@@ -26,7 +25,7 @@ local CORNER_OFFSET = {
     RIGHT       = { 3, 0 },
 }
 
--- Gibt den Spell-Namen für einen spell-type Button zurück, oder nil.
+-- Returns the spell name for a spell-type button, or nil.
 local function GetButtonSpellName(btn)
     if btn._state_type ~= "spell" then return nil end
     local action = btn._state_action
@@ -35,17 +34,17 @@ local function GetButtonSpellName(btn)
     return info and info.name
 end
 
--- Spell-Namen die mindestens einmal als Player-Buff gesehen wurden.
--- Wird zur Laufzeit befüllt; erst dann zeigen wir "-" wenn der Buff inaktiv ist.
+-- Spell names that have been seen at least once as a player buff.
+-- Filled at runtime; only then do we show "-" when the buff is inactive.
 local knownBuffSpells = {}
 
--- Verdrahtet knownBuffSpells mit der persistenten global-DB-Tabelle.
--- Muss aus OnInitialize aufgerufen werden nachdem self.db gesetzt ist.
+-- Wires knownBuffSpells to the persistent global DB table.
+-- Must be called from OnInitialize after self.db is set.
 function SUB:InitBuffSpells()
     knownBuffSpells = self.db.global.buffSpells
 end
 
--- Durchsucht hilfreiche Auren auf `unit` nach einem Player-Cast-Buff mit `spellName`.
+-- Scans helpful auras on `unit` for a player-cast buff with `spellName`.
 local function ScanPlayerBuff(unit, spellName)
     for i = 1, 40 do
         local name, _, _, _, duration, expirationTime, source = CE.Unit.UnitAura(unit, i, "HELPFUL")
@@ -57,7 +56,7 @@ local function ScanPlayerBuff(unit, spellName)
     end
 end
 
--- Gibt (expirationTime, duration) von `spellName` auf `unit` zurück, oder nil.
+-- Returns (expirationTime, duration) of `spellName` on `unit`, or nil.
 local function FindPlayerBuffOnUnit(unit, spellName)
     if not unit or not CE.Unit.UnitExists(unit) then return nil end
     return ScanPlayerBuff(unit, spellName)
@@ -69,7 +68,7 @@ local BUFF_TIME_FORMATS = {
     { min = 0,    div = 1,    suffix = "s" },
 }
 
--- Formatiert eine positive verbleibende Buff-Dauer in h/m/s.
+-- Formats a positive remaining buff duration as h/m/s.
 local function FormatPositiveBuffTime(remaining)
     for _, fmt in ipairs(BUFF_TIME_FORMATS) do
         if remaining >= fmt.min then
@@ -79,13 +78,13 @@ local function FormatPositiveBuffTime(remaining)
     return "0"
 end
 
--- Formatiert eine beliebige Dauer mit Guard gegen nicht-positive Werte.
+-- Formats any duration with a guard against non-positive values.
 local function FormatBuffTime(remaining)
     if remaining <= 0 then return "0" end
     return FormatPositiveBuffTime(remaining)
 end
 
--- Wendet Ecke, Offsets und Font-Einstellungen für den Buff-Status-Text an.
+-- Applies corner, offsets, and font settings for the buff status text.
 local function ConfigureBuffStatusTextLayout(fs, btn, db)
     local corner   = db.buffStatusCorner or "BOTTOMLEFT"
     local off      = CORNER_OFFSET[corner] or CORNER_OFFSET.BOTTOMLEFT
@@ -96,13 +95,13 @@ local function ConfigureBuffStatusTextLayout(fs, btn, db)
     fs:SetFont(fontPath, db.buffStatusFontSize or 9, flags)
 end
 
--- Setzt Farbe und Text für die Buff-Status-Ausgabe.
+-- Sets color and text for the buff status display.
 local function SetBuffStatusDisplay(fs, color, text)
     fs:SetTextColor(color.r, color.g, color.b, color.a)
     fs:SetText(text)
 end
 
--- Zeigt aktiven Buff-Status: '~' für zeitlose Buffs oder verbleibende Dauer.
+-- Shows active buff status: '~' for timeless buffs or remaining duration.
 local function ShowActiveBuffStatus(btn, fs, db, expirationTime, duration)
     btn.SUB_buffExpiry = expirationTime
     if duration == 0 then
@@ -119,20 +118,20 @@ local function ShowActiveBuffStatus(btn, fs, db, expirationTime, duration)
     SetBuffStatusDisplay(fs, c, FormatBuffTime(remaining))
 end
 
--- Zeigt '-' wenn der Spell als Buff bekannt ist aber aktuell inaktiv.
+-- Shows '-' when the spell is known as a buff but currently inactive.
 local function ShowInactiveKnownBuffStatus(btn, fs, db)
     btn.SUB_buffExpiry = nil
     local c = db.buffStatusColor or { r = 1, g = 1, b = 0, a = 1 }
     SetBuffStatusDisplay(fs, c, "-")
 end
 
--- Löscht den Text wenn der Spell nicht als Buff-Spell bekannt ist.
+-- Clears the text when the spell is not known as a buff spell.
 local function ShowUnknownBuffStatus(btn, fs)
     btn.SUB_buffExpiry = nil
     fs:SetText("")
 end
 
--- Wählt welche Buff-Status-Darstellung für den aktuellen Spell angezeigt wird.
+-- Selects which buff status representation is shown for the current spell.
 local function UpdateBuffStatusDisplayForSpell(btn, fs, db, spellName)
     local expirationTime, duration = FindPlayerBuffOnUnit(btn.SUB_unit, spellName)
     if expirationTime then
@@ -146,8 +145,8 @@ local function UpdateBuffStatusDisplayForSpell(btn, fs, db, spellName)
     ShowUnknownBuffStatus(btn, fs)
 end
 
--- Gibt den Spell-Namen für die Buff-Status-Anzeige zurück, oder nil wenn
--- die Funktion deaktiviert ist, der Button leer ist oder kein Name aufgelöst werden kann.
+-- Returns the spell name for the buff status display, or nil if
+-- the feature is disabled, the button is empty, or no name can be resolved.
 local function GetBuffSpellForButton(btn, db)
     if not db or not db.showBuffStatus then return nil end
     local btnType = btn._state_type
@@ -155,7 +154,7 @@ local function GetBuffSpellForButton(btn, db)
     return GetButtonSpellName(btn)
 end
 
--- Aktualisiert den Buff-Status-Text-Overlay auf `btn`.
+-- Updates the buff status text overlay on `btn`.
 function SUB:UpdateButtonBuffStatus(btn)
     local fs = btn.SUB_buffStatusText
     if not fs then return end
@@ -169,7 +168,7 @@ function SUB:UpdateButtonBuffStatus(btn)
     UpdateBuffStatusDisplayForSpell(btn, fs, db, spellName)
 end
 
--- Aktualisiert Buff-Status-Indikatoren für alle Unit-Bars.
+-- Updates buff status indicators for all unit bars.
 function SUB:UpdateAllBuffStatuses()
     for _, unit in ipairs(UNITS) do
         local bd = self.bars[unit]
@@ -184,7 +183,7 @@ function SUB:UpdateAllBuffStatuses()
     end
 end
 
--- Aktualisiert Buff-Status-Indikatoren für eine Unit-Bar.
+-- Updates buff status indicators for one unit bar.
 function SUB:UpdateBuffStatusesForUnit(unit)
     local bd = self.bars[unit]
     if not bd then return end

@@ -1,6 +1,5 @@
--------------------------------------------------------------------------------
 -- Integrations/ShadowedUnitFrames.lua
--- ShadowedUnitFrames-Integration: Frame-Lookup, Positionierung, Options-Block
+-- ShadowedUnitFrames integration: frame lookup, positioning, options block
 -------------------------------------------------------------------------------
 
 local _, SUB_NS     = ...
@@ -10,28 +9,27 @@ local UNITS         = SUB_NS.UNITS
 local UNIT_INDEX    = SUB_NS.UNIT_INDEX
 local HANDLE_HEIGHT = SUB_NS.HANDLE_HEIGHT
 
--------------------------------------------------------------------------------
--- Frame-Lookup
+-- Frame Lookup
 --
--- Party-Frames leben in einem SecureGroupHeaderTemplate ohne vorhersehbare
--- globale Namen, daher wird SUFs eigene unitFrames-Map benutzt.
+-- Party frames live in a SecureGroupHeaderTemplate without predictable
+-- global names, so SUF's own unitFrames map is used.
 --
--- Sonderfall "player":
---   SUFs OnAttributeChanged speichert einen Frame in unitFrames nur dann,
---   wenn unitRealType == unitType.  Für das Party-Header-Kind mit unit="player"
---   gilt unitRealType="player" aber unitType="party" → das Kind landet NIE in
---   unitFrames["player"].  Daher scannen wir zuerst die Party-Header-Kinder
---   nach einem sichtbaren Kind mit unit="player", bevor wir auf den
---   SUFUnitplayer-Standalone zurückfallen.
+-- Special case "player":
+--   SUF's OnAttributeChanged stores a frame in unitFrames only when
+--   unitRealType == unitType. For the party-header child with unit="player",
+--   unitRealType="player" but unitType="party" → that child NEVER ends up in
+--   unitFrames["player"]. Therefore we scan the party-header children first
+--   for a visible child with unit="player" before falling back to the
+--   standalone SUFUnitplayer frame.
 -------------------------------------------------------------------------------
 
--- Gibt SUFs units-Table zurück, oder nil wenn SUF nicht verfügbar.
+-- Returns SUF's units table, or nil if SUF is unavailable.
 local function GetShadowUFUnits()
     local suf = _G["ShadowUF"]
     return suf and suf.Units or nil
 end
 
--- Gibt den sichtbaren Player-Frame aus SUFs Party-Header zurück, oder nil.
+-- Returns the visible player frame from SUF's party header, or nil.
 local function GetSUFPartyPlayerFrame(units)
     local partyHeader = units.headerFrames and units.headerFrames["party"]
     if not partyHeader or not partyHeader:IsShown() then return nil end
@@ -45,7 +43,7 @@ local function GetSUFPartyPlayerFrame(units)
     return nil
 end
 
--- Gibt den sichtbaren Frame aus SUFs unitFrames-Map zurück, oder nil.
+-- Returns the visible frame from SUF's unitFrames map, or nil.
 local function GetSUFUnitFrame(units, unit)
     local unitFrames = units.unitFrames
     if not unitFrames then return nil end
@@ -56,7 +54,7 @@ local function GetSUFUnitFrame(units, unit)
     return nil
 end
 
--- Gibt den sichtbaren Standalone-SUF-Frame zurück, oder nil.
+-- Returns the visible standalone SUF frame, or nil.
 local function GetStandaloneSUFFrame(unit)
     local standalone = _G["SUFUnit" .. unit]
     if standalone and standalone:IsShown() then return standalone end
@@ -64,13 +62,13 @@ local function GetStandaloneSUFFrame(unit)
     return nil
 end
 
--- Gibt den höchst-priorisierten SUF-Frame für `unit` zurück, oder nil.
+-- Returns the highest-priority SUF frame for `unit`, or nil.
 local function GetPreferredSUFFrame(units, unit)
     if unit ~= "player" then return nil end
     return GetSUFPartyPlayerFrame(units)
 end
 
--- Gibt den passenden sichtbaren SUF-Frame für `unit` zurück, oder nil.
+-- Returns the matching visible SUF frame for `unit`, or nil.
 local function GetSUFFrame(unit)
     local units = GetShadowUFUnits()
     if not units then return nil end
@@ -80,11 +78,11 @@ local function GetSUFFrame(unit)
         or GetStandaloneSUFFrame(unit)
 end
 
--- Vertikaler Y-Offset in ApplySUFPositions, damit der Ankerpunkt auf die
--- Button-Leiste zeigt, nicht auf die darüber liegende Drag-Handle-Leiste.
--- TOP*  → Frame muss um HANDLE_HEIGHT nach oben verschoben werden
--- MID   → Frame muss um HANDLE_HEIGHT/2 nach oben verschoben werden
--- BOT*  → keine Anpassung nötig (Buttons enden am Frame-Boden)
+-- Vertical Y offset in ApplySUFPositions so the anchor point targets the
+-- button bar instead of the drag handle bar above it.
+-- TOP*  → frame must be shifted up by HANDLE_HEIGHT
+-- MID   → frame must be shifted up by HANDLE_HEIGHT/2
+-- BOT*  → no adjustment needed (buttons end at the frame bottom)
 local SUF_HANDLE_ADJUST = {
     TOPLEFT     = HANDLE_HEIGHT,
     TOP         = HANDLE_HEIGHT,
@@ -96,19 +94,18 @@ local SUF_HANDLE_ADJUST = {
     BOTTOMRIGHT = 0,
 }
 
--------------------------------------------------------------------------------
--- Öffentliche Integrations-Methoden
+-- Public Integration Methods
 -------------------------------------------------------------------------------
 
--- Gibt true zurück wenn ShadowedUnitFrames geladen ist.
+-- Returns true if ShadowedUnitFrames is loaded.
 function SUB:IsSUFInstalled()
     local fn = (C_AddOns and C_AddOns.IsAddOnLoaded) or _G["IsAddOnLoaded"]
     return fn ~= nil and fn("ShadowedUnitFrames") == true
 end
 
--- "suf"-Modus: jede Bar an den entsprechenden ShadowedUnitFrames-Party-Frame ankern.
--- Der Y-Offset wird automatisch angepasst, damit der Ankerpunkt auf die
--- Button-Leiste zeigt (nicht auf die Drag-Handle-Leiste darüber).
+-- "suf" mode: anchor each bar to the corresponding ShadowedUnitFrames party frame.
+-- The Y offset is adjusted automatically so the anchor point targets the
+-- button bar (not the drag handle bar above it).
 function SUB:ApplySUFPositions()
     local db       = self.db.profile
     local selfPt   = db.sufAnchorSelf or "LEFT"
@@ -125,7 +122,7 @@ function SUB:ApplySUFPositions()
             if sufFrame then
                 bd.frame:SetPoint(selfPt, sufFrame, targetPt, offX, offY + yAdj)
             else
-                -- Fallback wenn kein sichtbarer SUF-Frame gefunden: Standard-Stapeln.
+                -- Fallback if no visible SUF frame is found: default stacking.
                 local uIdx = UNIT_INDEX[unit] or 0
                 bd.frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT",
                     10, -100 - uIdx * (db.buttonSize + HANDLE_HEIGHT + 6))
@@ -134,8 +131,8 @@ function SUB:ApplySUFPositions()
     end
 end
 
--- Plant einen aufgeschobenen ApplySUFPositions-Aufruf für den nächsten Frame-Tick.
--- Schützt vor gestapelten Aufrufen bei schnellen Roster-Änderungen.
+-- Schedules a deferred ApplySUFPositions call for the next frame tick.
+-- Protects against stacked calls during rapid roster changes.
 function SUB:ScheduleSUFPositions()
     if self.sufPosPending then return end
     self.sufPosPending = true
@@ -147,7 +144,7 @@ function SUB:ScheduleSUFPositions()
     end)
 end
 
--- Gibt den AceConfig-Block für die SUF-Ankerpunkt-Optionen zurück.
+-- Returns the AceConfig block for the SUF anchor point options.
 function SUB:GetSUFOptionsGroup()
     local L = LibStub("AceLocale-3.0"):GetLocale("SupportUnitButtons")
     return {
