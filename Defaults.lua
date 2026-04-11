@@ -59,6 +59,8 @@ SUB_NS.defaults = {
         dispelAlertAlphaMin          = 0.0,      -- minimum opacity at animation trough (0 = full pulse)
         dispelAlertAlphaMax          = 1.0,      -- maximum opacity at animation peak
         dispelAlertPulseSpeed        = 2.5,      -- animation frequency multiplier
+        dispelAlertResync            = true,     -- periodic fallback check for stale aura state
+        dispelAlertResyncInterval    = 1.0,      -- fallback check interval in seconds
         dispelAlertBorderWidth       = 0,        -- 0 = auto (6 % of button width), else manual px
         dispelAlertPadding           = 3,        -- outset from button edge in px (negative = inset)
         dispelAlertShape             = "square", -- "square" | "circle"

@@ -165,6 +165,12 @@ L["Preview"]                                                                    
 L["Simulate dispel alert"]                                                                                                        = "Entzauberungs-Alarm simulieren"
 L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."]                                         =
 "Zeigt den Alarm auf allen Entzauberungs-Buttons damit die Darstellung außerhalb des Kampfes eingestellt werden kann."
+L["Periodic dispel resync"]                                                                                                       = "Periodische Entzauberungs-Neusynchronisierung"
+L["Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."]     =
+"Führt jede Sekunde eine vollständige Entzauberungs-Prüfung aus, um selten verpasste Aura-Updates auszugleichen (verhindert festhängende Blink-Alerts)."
+L["Resync interval (sec)"]                                                                                                        = "Neusync-Intervall (Sek.)"
+L["How often the periodic dispel resync runs."]                                                                                   =
+"Wie oft die periodische Entzauberungs-Neusynchronisierung ausgeführt wird."
 L["Sound"]                                                                                                                        = "Sound"
 L["Activate sound"]                                                                                                               = "Sound aktivieren"
 L["Plays a sound when a party member gets a dispellable debuff."]                                                                 =

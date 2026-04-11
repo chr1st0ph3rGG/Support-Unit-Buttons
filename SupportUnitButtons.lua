@@ -144,16 +144,35 @@ function SUB:OnEnable()
     -- once tutorialPage >= 5, so it only fires on a fresh profile).
     self:TriggerTutorial(5)
 
-    -- Buff status countdown ticker: updates remaining time every second.
+    -- Periodic consistency ticker:
+    -- - Buff status countdown updates at a fixed 1s cadence.
+    -- - Dispel highlight reconciliation at a configurable cadence as a safety
+    --   net if UNIT_AURA updates are delayed/missed.
     local buffTicker = CreateFrame("Frame")
-    buffTicker._t    = 0
+    buffTicker._buffT = 0
+    buffTicker._dispelT = 0
     buffTicker:SetScript("OnUpdate", function(ticker, elapsed)
-        ticker._t = ticker._t + elapsed
-        if ticker._t >= 1 then
-            ticker._t = 0
-            if SUB.db and SUB.db.profile and SUB.db.profile.showBuffStatus then
+        local db = SUB.db and SUB.db.profile
+        if not db then return end
+
+        ticker._buffT = ticker._buffT + elapsed
+        if ticker._buffT >= 1 then
+            ticker._buffT = 0
+            if db.showBuffStatus then
                 SUB:UpdateAllBuffStatuses()
             end
+        end
+
+        if db.dispelAlert and db.dispelAlertResync ~= false and not SUB.dispelAlertPreview then
+            ticker._dispelT = ticker._dispelT + elapsed
+            local interval = db.dispelAlertResyncInterval or 1.0
+            if interval < 0.1 then interval = 0.1 end
+            if ticker._dispelT >= interval then
+                ticker._dispelT = 0
+                SUB:UpdateAllDispelHighlights()
+            end
+        else
+            ticker._dispelT = 0
         end
     end)
 end

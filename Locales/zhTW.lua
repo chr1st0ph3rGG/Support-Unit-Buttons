@@ -159,6 +159,11 @@ L["Preview"] = "預覽"
 L["Simulate dispel alert"] = "模擬驅散提醒"
 L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."] =
 "在所有驅散按鈕上顯示提醒，讓你可在非戰鬥狀態調整外觀。"
+L["Periodic dispel resync"] = "Periodic dispel resync"
+L["Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."] =
+"Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."
+L["Resync interval (sec)"] = "Resync interval (sec)"
+L["How often the periodic dispel resync runs."] = "How often the periodic dispel resync runs."
 L["Sound"] = "音效"
 L["Activate sound"] = "啟用音效"
 L["Plays a sound when a party member gets a dispellable debuff."] = "當隊伍成員獲得可驅散的減益效果時播放音效。"

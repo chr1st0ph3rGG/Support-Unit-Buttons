@@ -1,16 +1,10 @@
--------------------------------------------------------------------------------
--- Locales/esES.lua  –  Español (España / Latinoamérica)
--------------------------------------------------------------------------------
-
 local L = LibStub("AceLocale-3.0"):NewLocale("SupportUnitButtons", "esES")
 if not L then return end
 
--- Pestañas
 L["Bar"]                                                                                                                          = "Barra"
 L["Button Overlays"]                                                                                                              = "Superposiciones de botones"
 L["Dispel"]                                                                                                                       = "Disipar"
 
--- General
 L["General"]                                                                                                                      = "General"
 L["Show player bar"]                                                                                                              = "Mostrar barra del jugador"
 L["Only in party"]                                                                                                                = "Solo en grupo"
@@ -29,7 +23,6 @@ L["Ctrl"]                                                                       
 L["Alt"]                                                                                                                          = "Alt"
 L["Any"]                                                                                                                          = "Cualquiera"
 
--- Diseño de botones
 L["Button Layout"]                                                                                                                = "Diseño de botones"
 L["Button size"]                                                                                                                  = "Tamaño de botón"
 L["Width and height of each button (pixels)"]                                                                                     = "Ancho y alto de cada botón (píxeles)"
@@ -44,7 +37,6 @@ L["Gap shared/individual"]                                                      
 L["Space between the shared and individual button sections (pixels)"]                                                             =
 "Espacio entre las secciones de botones compartidos e individuales (píxeles)"
 
--- Posicionamiento de barras
 L["Bar Positioning"]                                                                                                              = "Posicionamiento de barras"
 L["Lock bars"]                                                                                                                    = "Bloquear barras"
 L["Prevent bars from being moved by dragging"]                                                                                    = "Evita que las barras se muevan arrastrando"
@@ -63,7 +55,6 @@ L["ShadowedUnitFrames: anchor each bar next to a SUF party frame."]             
 "ShadowedUnitFrames: Ancla cada barra al lado de un marco de grupo SUF."
 L["ShadowedUnitFrames"]                                                                                                           = "ShadowedUnitFrames"
 
--- Anclaje ShadowedUnitFrames
 L["ShadowedUnitFrames Anchor"]                                                                                                    = "Anclaje ShadowedUnitFrames"
 L["Bar anchor point"]                                                                                                             = "Punto de anclaje de la barra"
 L["Which point of the SUB bar to anchor from"]                                                                                    = "Qué punto de la barra SUB usar para el anclaje"
@@ -74,7 +65,6 @@ L["Horizontal offset from the SUF anchor point (pixels)"]                       
 L["Vertical offset from the SUF anchor point (pixels)"]                                                                           =
 "Desplazamiento vertical desde el punto de anclaje SUF (píxeles)"
 
--- Textos comunes (Rango del hechizo + Recuento de lanzamientos)
 L["Font"]                                                                                                                         = "Fuente"
 L["Font size"]                                                                                                                    = "Tamaño de fuente"
 L["Outline"]                                                                                                                      = "Contorno"
@@ -103,12 +93,10 @@ L["Reagent Count Color"]                                                        
 L["Normal Color"]                                                                                                                 = "Color normal"
 L["Enable"]                                                                                                                       = "Activar"
 
--- Rango del hechizo
 L["Spell Rank"]                                                                                                                   = "Rango del hechizo"
 L["Show spell rank"]                                                                                                              = "Mostrar rango del hechizo"
 L["Display the spell rank number on each button"]                                                                                 = "Muestra el número de rango del hechizo en cada botón"
 
--- Recuento de lanzamientos / objetos
 L["Cast Count / Item Count"]                                                                                                      = "Recuento de lanzamientos / objetos"
 L["Show how many times a spell can be cast before going OOM,\nor the total item count in bags."]                                  =
 "Muestra cuántas veces se puede lanzar un hechizo antes de quedarse sin maná,\no el recuento total de objetos en las bolsas."
@@ -117,7 +105,6 @@ L["Color of the cast count number for spells"]                                  
 L["Item Color"]                                                                                                                   = "Color del objeto"
 L["Color of the cast count number for items"]                                                                                     = "Color del número de lanzamientos para objetos"
 
--- Tutorial
 L["Show Tutorial"]                                                                                                                = "Mostrar tutorial"
 L["Replay the introductory tutorial"]                                                                                             = "Repetir el tutorial introductorio"
 L["TUTORIAL_TITLE"]                                                                                                               = "Support Unit Buttons"
@@ -129,7 +116,6 @@ L["TUTORIAL_P3"]                                                                
 "Escribe /sub o /SupportUnitButtons para abrir el panel de Opciones en cualquier momento.\n\nTambién lo puedes encontrar en:\n\n Interface > AddOns > SupportUnitButtons."
 L["Open Options"]                                                                                                                 = "Abrir opciones"
 
--- Alerta de disipación
 L["Dispel Alert"]                                                                                                                 = "Alerta de disipación"
 L["Show a pulsing border on buttons that can dispel a debuff the unit currently has."]                                            =
 "Muestra un borde pulsante en los botones que pueden disipar un debuff actual de la unidad."
@@ -167,6 +153,11 @@ L["Preview"]                                                                    
 L["Simulate dispel alert"]                                                                                                        = "Simular alerta de disipación"
 L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."]                                         =
 "Muestra la alerta en todos los botones de disipación para ajustar la apariencia fuera de combate."
+L["Periodic dispel resync"]                                                                                                       = "Periodic dispel resync"
+L["Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."]     =
+"Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."
+L["Resync interval (sec)"]                                                                                                        = "Resync interval (sec)"
+L["How often the periodic dispel resync runs."]                                                                                   = "How often the periodic dispel resync runs."
 L["Sound"]                                                                                                                        = "Sonido"
 L["Activate sound"]                                                                                                               = "Activar sonido"
 L["Plays a sound when a party member gets a dispellable debuff."]                                                                 =
@@ -174,7 +165,6 @@ L["Plays a sound when a party member gets a dispellable debuff."]               
 L["Channel"]                                                                                                                      = "Canal"
 L["Audio Channel for Dispel Alert Sound"]                                                                                         = "Canal de audio para el sonido de alerta de disipación"
 
--- Masque
 L["Masque"]                                                                                                                       = "Masque"
 L["Open Masque Options"]                                                                                                          = "Abrir opciones de Masque"
 L["Open the Masque skin options for SupportUnitButtons."]                                                                         =
@@ -182,12 +172,10 @@ L["Open the Masque skin options for SupportUnitButtons."]                       
 L["Masque is required to skin the buttons.\nInstall Masque to enable this feature."]                                              =
 "Masque es necesario para personalizar los botones.\nInstala Masque para habilitar esta función."
 
--- Recuento de reactivos
 L["Reagent Count"]                                                                                                                = "Recuento de reactivos"
 L["Show the reagent count on spell buttons that require reagents, replacing the default count display."]                          =
 "Muestra el recuento de reactivos en los botones de hechizos que requieren reactivos, reemplazando la visualización de recuento predeterminada."
 
--- Estado del buff
 L["Buff Status"]                                                                                                                  = "Estado del buff"
 L["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."] =
 "Muestra la duración restante del buff en la esquina del botón cuando el hechizo está activo en el objetivo, o \"-\" si no está activo."

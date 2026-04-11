@@ -151,6 +151,10 @@ L["Disease"]                                                                    
 L["Preview"]                                                                                                                      = true
 L["Simulate dispel alert"]                                                                                                        = true
 L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."]                                         = true
+L["Periodic dispel resync"]                                                                                                       = true
+L["Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."]     = true
+L["Resync interval (sec)"]                                                                                                        = true
+L["How often the periodic dispel resync runs."]                                                                                   = true
 L["Sound"]                                                                                                                        = true
 L["Activate sound"]                                                                                                               = true
 L["Plays a sound when a party member gets a dispellable debuff."]                                                                 = true

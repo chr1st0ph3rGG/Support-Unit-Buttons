@@ -161,6 +161,11 @@ L["Preview"]                                                                    
 L["Simulate dispel alert"]                                                                                                        = "해제 경고 시뮬레이션"
 L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."]                                         =
 "전투 외부에서 외관을 조정할 수 있도록 모든 해제 버튼에 경고를 표시합니다."
+L["Periodic dispel resync"]                                                                                                       = "Periodic dispel resync"
+L["Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."]     =
+"Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."
+L["Resync interval (sec)"]                                                                                                        = "Resync interval (sec)"
+L["How often the periodic dispel resync runs."]                                                                                   = "How often the periodic dispel resync runs."
 L["Sound"]                                                                                                                        = "사운드"
 L["Activate sound"]                                                                                                               = "사운드 활성화"
 L["Plays a sound when a party member gets a dispellable debuff."]                                                                 = "파티 멤버가 해제 가능한 디버프를 받을 때 사운드를 재생합니다."

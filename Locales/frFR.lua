@@ -167,6 +167,11 @@ L["Preview"]                                                                    
 L["Simulate dispel alert"]                                                                                                        = "Simuler l'alerte de dissipation"
 L["Show the alert on all dispel buttons so you can adjust appearance outside of combat."]                                         =
 "Affiche l'alerte sur tous les boutons de dissipation pour ajuster l'apparence hors combat."
+L["Periodic dispel resync"]                                                                                                       = "Periodic dispel resync"
+L["Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."]     =
+"Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."
+L["Resync interval (sec)"]                                                                                                        = "Resync interval (sec)"
+L["How often the periodic dispel resync runs."]                                                                                   = "How often the periodic dispel resync runs."
 L["Sound"]                                                                                                                        = "Son"
 L["Activate sound"]                                                                                                               = "Activer le son"
 L["Plays a sound when a party member gets a dispellable debuff."]                                                                 =

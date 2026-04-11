@@ -203,10 +203,10 @@ function SUB:BuildOptionsTable()
                                 name   = L["Mode"],
                                 desc   = function()
                                     local s = L
-                                    ["Free: drag each bar individually.\nAnchored: all bars move as a group."]
+                                        ["Free: drag each bar individually.\nAnchored: all bars move as a group."]
                                     if self:IsSUFInstalled() then
                                         s = s ..
-                                        "\n" .. L["ShadowedUnitFrames: anchor each bar next to a SUF party frame."]
+                                            "\n" .. L["ShadowedUnitFrames: anchor each bar next to a SUF party frame."]
                                     end
                                     return s
                                 end,
@@ -619,7 +619,7 @@ function SUB:BuildOptionsTable()
                             showReagentCount = {
                                 name  = L["Enable"],
                                 desc  = L
-                                ["Show the reagent count on spell buttons that require reagents, replacing the default count display."],
+                                    ["Show the reagent count on spell buttons that require reagents, replacing the default count display."],
                                 type  = "toggle",
                                 order = 1,
                                 get   = function() return self.db.profile.showReagentCount end,
@@ -760,7 +760,7 @@ function SUB:BuildOptionsTable()
                             showBuffStatus = {
                                 name  = L["Enable"],
                                 desc  = L
-                                ["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."],
+                                    ["Show remaining buff duration in the button corner when the button's spell is active on the target, or \"-\" when not active."],
                                 type  = "toggle",
                                 order = 1,
                                 get   = function() return self.db.profile.showBuffStatus end,
@@ -872,7 +872,7 @@ function SUB:BuildOptionsTable()
                             buffStatusLowThreshold = {
                                 name     = L["Low threshold (sec)"],
                                 desc     = L
-                                ["Switch to the low-time color when remaining duration drops below this value (seconds)."],
+                                    ["Switch to the low-time color when remaining duration drops below this value (seconds)."],
                                 type     = "range",
                                 min      = 0,
                                 max      = 600,
@@ -956,7 +956,7 @@ function SUB:BuildOptionsTable()
                             preview = {
                                 name     = L["Simulate dispel alert"],
                                 desc     = L
-                                ["Show the alert on all dispel buttons so you can adjust appearance outside of combat."],
+                                    ["Show the alert on all dispel buttons so you can adjust appearance outside of combat."],
                                 type     = "toggle",
                                 order    = 2,
                                 disabled = function() return not self.db.profile.dispelAlert end,
@@ -964,6 +964,39 @@ function SUB:BuildOptionsTable()
                                 set      = function(_, v)
                                     SUB.dispelAlertPreview = v
                                     SUB:UpdateAllDispelHighlights()
+                                end,
+                            },
+                            periodicResync = {
+                                name     = L["Periodic dispel resync"],
+                                desc     = L
+                                    ["Run a periodic full dispel check every second to recover from rare missed aura updates (prevents stuck blinking alerts)."],
+                                type     = "toggle",
+                                order    = 3,
+                                disabled = function() return not self.db.profile.dispelAlert end,
+                                get      = function() return self.db.profile.dispelAlertResync ~= false end,
+                                set      = function(_, v)
+                                    self.db.profile.dispelAlertResync = v
+                                    if v then
+                                        self:UpdateAllDispelHighlights()
+                                    end
+                                end,
+                            },
+                            periodicResyncInterval = {
+                                name     = L["Resync interval (sec)"],
+                                desc     = L["How often the periodic dispel resync runs."],
+                                type     = "range",
+                                order    = 4,
+                                min      = 0.2,
+                                max      = 5.0,
+                                step     = 0.1,
+                                disabled = function()
+                                    return not self.db.profile.dispelAlert or self.db.profile.dispelAlertResync == false
+                                end,
+                                get      = function()
+                                    return self.db.profile.dispelAlertResyncInterval or 1.0
+                                end,
+                                set      = function(_, v)
+                                    self.db.profile.dispelAlertResyncInterval = v
                                 end,
                             },
                         },
@@ -1010,7 +1043,7 @@ function SUB:BuildOptionsTable()
                             alphaMin = {
                                 name  = L["Alpha minimum"],
                                 desc  = L
-                                ["Minimum opacity at the trough of the animation. 0 = fully fades out, above 0 = always visible."],
+                                    ["Minimum opacity at the trough of the animation. 0 = fully fades out, above 0 = always visible."],
                                 type  = "range",
                                 order = 4,
                                 min   = 0.0,
@@ -1057,7 +1090,7 @@ function SUB:BuildOptionsTable()
                             borderPadding = {
                                 name  = L["Border Padding"],
                                 desc  = L
-                                ["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."],
+                                    ["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."],
                                 type  = "range",
                                 order = 7,
                                 min   = -8,
