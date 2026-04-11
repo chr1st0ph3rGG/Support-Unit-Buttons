@@ -201,3 +201,29 @@ L["Low threshold (sec)"]                                                        
 L["Switch to the low-time color when remaining duration drops below this value (seconds)."]                                       =
 "Muda para a cor de tempo baixo quando a duração restante cai abaixo deste valor (segundos)."
 L["Low-time color"]                                                                                                               = "Cor tempo baixo"
+
+-- Resurrection Alert
+L["Resurrection"]                                                                                                                 = "Ressurreição"
+L["Resurrection Alert"]                                                                                                           = "Alerta de ressurreição"
+L["Show a colored border on resurrection buttons depending on the target's resurrection status."]                                 =
+"Mostra uma borda colorida nos botões de ressurreição dependendo do status de ressurreição do alvo."
+L["Simulate resurrection alert"]                                                                                                  = "Simular alerta de ressurreição"
+L["Show all three border colors across the bars so you can adjust their appearance outside of combat."]                           =
+"Mostra as três cores de borda nas barras para ajustar a aparência fora de combate."
+L["Periodic resync"]                                                                                                              = "Ressincronização periódica"
+L["Run a periodic full check to recover from missed death or resurrection events."]                                               =
+"Executa uma verificação completa periódica para recuperar eventos de morte ou ressurreição perdidos."
+L["How often the periodic resurrection resync runs."]                                                                             =
+"Com que frequência a ressincronização periódica de ressurreição é executada."
+L["Controls how fast the border pulses. Set to 0 for a fully static border."]                                                     =
+"Controla a velocidade do pulso da borda. Defina como 0 para uma borda totalmente estática."
+L["State Colors"]                                                                                                                 = "Cores de estado"
+L["Dead (no incoming rez)"]                                                                                                       = "Morto (sem ressurreição recebida)"
+L["Border color when the unit is dead with no resurrection in progress."]                                                         =
+"Cor da borda quando a unidade está morta e sem ressurreição em andamento."
+L["Casting resurrection"]                                                                                                         = "Conjurando ressurreição"
+L["Border color while a resurrection spell is being cast on the unit."]                                                           =
+"Cor da borda enquanto uma magia de ressurreição está sendo conjurada na unidade."
+L["Resurrection pending"]                                                                                                         = "Ressurreição pendente"
+L["Border color when the resurrection has been cast and the unit has not yet accepted it."]                                       =
+"Cor da borda quando a ressurreição foi lançada e a unidade ainda não a aceitou."

@@ -199,3 +199,29 @@ L["Low threshold (sec)"]                                                        
 L["Switch to the low-time color when remaining duration drops below this value (seconds)."]                                       =
 "Wechselt zur Niedrig-Zeit-Farbe wenn die verbleibende Dauer diesen Wert (Sekunden) unterschreitet."
 L["Low-time color"]                                                                                                               = "Niedrig-Zeit-Farbe"
+
+-- Resurrection Alert
+L["Resurrection"]                                                                                                                 = "Wiederbelebung"
+L["Resurrection Alert"]                                                                                                           = "Wiederbelebungs-Alarm"
+L["Show a colored border on resurrection buttons depending on the target's resurrection status."]                                 =
+"Zeigt einen farbigen Rand auf Wiederbelebungs-Buttons abhängig vom Wiederbelebungsstatus des Ziels."
+L["Simulate resurrection alert"]                                                                                                  = "Wiederbelebungs-Alarm simulieren"
+L["Show all three border colors across the bars so you can adjust their appearance outside of combat."]                           =
+"Zeigt alle drei Randfarben über die Leisten, damit du das Aussehen außerhalb des Kampfes anpassen kannst."
+L["Periodic resync"]                                                                                                              = "Periodische Resynchronisierung"
+L["Run a periodic full check to recover from missed death or resurrection events."]                                               =
+"Führt periodisch eine vollständige Prüfung aus, um verpasste Todes- oder Wiederbelebungsereignisse auszugleichen."
+L["How often the periodic resurrection resync runs."]                                                                             =
+"Wie oft die periodische Wiederbelebungs-Resynchronisierung ausgeführt wird."
+L["Controls how fast the border pulses. Set to 0 for a fully static border."]                                                     =
+"Steuert, wie schnell der Rand pulsiert. Auf 0 für einen vollständig statischen Rand."
+L["State Colors"]                                                                                                                 = "Statusfarben"
+L["Dead (no incoming rez)"]                                                                                                       = "Tot (kein eingehender Rezz)"
+L["Border color when the unit is dead with no resurrection in progress."]                                                         =
+"Randfarbe, wenn die Einheit tot ist und keine Wiederbelebung aktiv ist."
+L["Casting resurrection"]                                                                                                         = "Wiederbelebung wird gewirkt"
+L["Border color while a resurrection spell is being cast on the unit."]                                                           =
+"Randfarbe, während ein Wiederbelebungszauber auf die Einheit gewirkt wird."
+L["Resurrection pending"]                                                                                                         = "Wiederbelebung ausstehend"
+L["Border color when the resurrection has been cast and the unit has not yet accepted it."]                                       =
+"Randfarbe, wenn die Wiederbelebung gewirkt wurde, aber die Einheit sie noch nicht angenommen hat."

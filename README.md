@@ -5,7 +5,7 @@
 ![GitHub Release Date](https://img.shields.io/github/release-date/chr1st0ph3rGG/Support-Unit-Buttons)
 
 
-A World of Warcraft addon that adds a dedicated action bar for each party member, letting you cast spells or use items directly on any group member with a single click.
+A World of Warcraft addon that adds a dedicated action bar for each party member, letting you cast spells or use items directly on any group member with a single click, including configurable dispel and resurrection status alerts.
 
 Compatible with **Classic**, **TBC Classic**, **Classic MoP**
 
@@ -20,6 +20,7 @@ Compatible with **Classic**, **TBC Classic**, **Classic MoP**
 - **Button overlays** — optional overlays for spell rank, reagent count, cast count or item count, and buff status
 - **Buff status tracking** — shows remaining buff time on active buffs, configurable low-time warning color, and `-` for known inactive buffs
 - **Dispel alert** — pulsing border for dispellable debuffs with preview mode, square or circle shape, pulse tuning, optional per-debuff-type colors, and optional sound alert
+- **Resurrection alert** — status border for resurrection-capable buttons with configurable dead/casting/pending colors, preview mode, square or circle shape, pulse tuning, and periodic resync
 - **Masque support** — skin buttons with any Masque theme
 - **Profiles** — full AceDB profile support
 - **Localisation** — enUS, deDE, frFR, esES, itIT, koKR, ptBR, zhCN, zhTW
@@ -65,6 +66,11 @@ The options panel is also accessible via **Interface → AddOns → SupportUnitB
 - Enable the dispel alert border and adjust its look
 - Use one shared color or separate colors for Magic, Curse, Poison, and Disease
 - Optionally add a sound alert and choose the audio channel
+
+### Resurrection tab
+- Enable the resurrection alert border and adjust its look
+- Configure separate colors for dead (no incoming rez), casting resurrection, and resurrection pending
+- Preview all resurrection states and configure periodic resync behavior
 
 ### Profiles tab
 - Standard AceDB profile management for per-character and shared setups

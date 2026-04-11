@@ -59,7 +59,7 @@ SUB_NS.defaults = {
         dispelAlertAlphaMin          = 0.0,      -- minimum opacity at animation trough (0 = full pulse)
         dispelAlertAlphaMax          = 1.0,      -- maximum opacity at animation peak
         dispelAlertPulseSpeed        = 2.5,      -- animation frequency multiplier
-        dispelAlertResync            = true,     -- periodic fallback check for stale aura state
+        dispelAlertResync            = false,    -- periodic fallback check for stale aura state
         dispelAlertResyncInterval    = 1.0,      -- fallback check interval in seconds
         dispelAlertBorderWidth       = 0,        -- 0 = auto (6 % of button width), else manual px
         dispelAlertPadding           = 3,        -- outset from button edge in px (negative = inset)
@@ -72,6 +72,18 @@ SUB_NS.defaults = {
         dispelAlertSoundEnabled      = false,
         dispelAlertSound             = nil, -- LSM sound name; nil = no sound
         dispelAlertSoundChannel      = "Master",
+        rezAlert                     = true,
+        rezAlertColorDead            = { r = 1.0, g = 0.0, b = 0.0 }, -- red
+        rezAlertColorCasting         = { r = 1.0, g = 1.0, b = 0.0 }, -- yellow
+        rezAlertColorPending         = { r = 0.0, g = 1.0, b = 0.0 }, -- green
+        rezAlertShape                = "square",                      -- "square" | "circle"
+        rezAlertBorderWidth          = 0,                             -- 0 = auto (6 % of button width), else manual px
+        rezAlertPadding              = 3,                             -- outset from button edge in px (negative = inset)
+        rezAlertAlphaMin             = 0.5,                           -- static by default; lower for pulsing
+        rezAlertAlphaMax             = 1.0,
+        rezAlertPulseSpeed           = 2.5,                           -- 0 = no animation
+        rezAlertResync               = false,                         -- periodic fallback check
+        rezAlertResyncInterval       = 1.0,                           -- seconds between checks
         showBuffStatus               = true,
         buffStatusCorner             = "BOTTOMLEFT",
         buffStatusFont               = "2002 Bold",

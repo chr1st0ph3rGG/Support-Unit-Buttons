@@ -80,16 +80,39 @@ local function WrapButtonForUnitTarget(header, btn)
     -- range timer uses the Classic API (IsSpellInRange by name).
     -- Pass the spell name instead of the ID: avoids the error-prone
     -- LibSpellRange spellbook slot lookup that can return nil in Classic.
-    -- nil from IsSpellInRange means "spell cannot target this unit type"
-    -- (e.g. self-only spells on party members) → no range coloring (no fallback to 0).
+    -- Some spells return nil in classic range APIs for specific contexts.
+    -- In that case we apply a final UnitInRange fallback for party/raid units.
     btn.IsUnitInRange = function(self, unit)
         if self._state_type == "spell" and unit then
             if CE.Unit.UnitExists(unit) and not CE.Unit.UnitIsConnected(unit) then
                 return 0 -- offline = out of range
             end
-            local info = CE.Spell.GetSpellInfo(self._state_action)
-            local name = info and info.name
-            return name and SpellRange.IsSpellInRange(name, unit)
+            -- LAB may store spell actions as either numbers or numeric strings.
+            -- Normalize to number first so GetSpellInfo resolves reliably.
+            local action = tonumber(self._state_action) or self._state_action
+            -- Resolve by spell ID first. This avoids the name-path edge cases in
+            -- older clients where the name-based lookup can return nil repeatedly.
+            local inRange = SpellRange.IsSpellInRange(action, unit)
+
+            -- Fallback to native name-based API when the lib still returns nil.
+            if inRange == nil and IsSpellInRange then
+                local info = CE.Spell.GetSpellInfo(action)
+                local name = info and info.name
+                if name then
+                    inRange = IsSpellInRange(name, unit)
+                end
+            end
+
+            -- Final fallback for group units when spell-based range APIs still
+            -- report nil. UnitInRange returns true/false/nil.
+            if inRange == nil and UnitInRange then
+                local unitInRange = UnitInRange(unit)
+                if unitInRange ~= nil then
+                    inRange = unitInRange and 1 or 0
+                end
+            end
+
+            return inRange
         end
         return nil
     end

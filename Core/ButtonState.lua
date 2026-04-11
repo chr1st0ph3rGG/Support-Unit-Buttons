@@ -56,6 +56,7 @@ end
 local function ClearButtonState(self, btn)
     ClearButtonOverlays(self, btn)
     self:UpdateDispelHighlight(btn)
+    self:UpdateRezHighlight(btn)
 end
 
 -------------------------------------------------------------------------------
@@ -194,6 +195,7 @@ function SUB:ClearSharedButton(btn)
         btn.SUB_reagentCountHidden = nil
     end
     self:UpdateDispelHighlight(btn)
+    self:UpdateRezHighlight(btn)
 end
 
 -- Restores the previous button contents without a callback loop.
@@ -242,6 +244,7 @@ function SUB:ApplyButtonState(btn, btnType, action)
     self:UpdateButtonReagentCount(btn, btnType, action)
     self:UpdateButtonCastCount(btn, btnType, action)
     self:UpdateDispelHighlight(btn)
+    self:UpdateRezHighlight(btn)
     self:UpdateButtonBuffStatus(btn)
 end
 
@@ -297,6 +300,7 @@ end
 function SUB:ApplyAllButtonStates()
     if CE.Combat.InCombatLockdown() then return end
     self:BuildDispelNameTypes()
+    self:BuildRezNameSpells()
     for _, unit in ipairs(UNITS) do
         local bd = self.bars[unit]
         if not bd then break end
@@ -399,6 +403,7 @@ local function ApplyRosterPositionMode(self)
         -- C_Timer.After(0) fires after all handlers of the current frame, so
         -- SUF frames are guaranteed to be created/visible by then.
         self:ScheduleSUFPositions()
+        return
     end
 end
 

@@ -193,3 +193,29 @@ L["Low threshold (sec)"]                                                        
 L["Switch to the low-time color when remaining duration drops below this value (seconds)."]                                       =
 "남은 시간이 이 값(초) 아래로 떨어지면 낮은 시간 색상으로 전환합니다."
 L["Low-time color"]                                                                                                               = "낮은 시간 색상"
+
+-- Resurrection Alert
+L["Resurrection"]                                                                                                                 = "부활"
+L["Resurrection Alert"]                                                                                                           = "부활 경고"
+L["Show a colored border on resurrection buttons depending on the target's resurrection status."]                                 =
+"대상의 부활 상태에 따라 부활 버튼에 색상 테두리를 표시합니다."
+L["Simulate resurrection alert"]                                                                                                  = "부활 경고 시뮬레이션"
+L["Show all three border colors across the bars so you can adjust their appearance outside of combat."]                           =
+"전투 중이 아닐 때 모양을 조정할 수 있도록 바 전체에 세 가지 테두리 색상을 표시합니다."
+L["Periodic resync"]                                                                                                              = "주기적 재동기화"
+L["Run a periodic full check to recover from missed death or resurrection events."]                                               =
+"놓친 사망 또는 부활 이벤트를 복구하기 위해 주기적으로 전체 검사를 수행합니다."
+L["How often the periodic resurrection resync runs."]                                                                             =
+"주기적 부활 재동기화를 얼마나 자주 실행할지 설정합니다."
+L["Controls how fast the border pulses. Set to 0 for a fully static border."]                                                     =
+"테두리의 맥동 속도를 조절합니다. 완전히 고정된 테두리는 0으로 설정하세요."
+L["State Colors"]                                                                                                                 = "상태 색상"
+L["Dead (no incoming rez)"]                                                                                                       = "사망 (들어오는 부활 없음)"
+L["Border color when the unit is dead with no resurrection in progress."]                                                         =
+"유닛이 사망했고 진행 중인 부활이 없을 때의 테두리 색상입니다."
+L["Casting resurrection"]                                                                                                         = "부활 시전 중"
+L["Border color while a resurrection spell is being cast on the unit."]                                                           =
+"유닛에게 부활 주문을 시전하는 동안의 테두리 색상입니다."
+L["Resurrection pending"]                                                                                                         = "부활 대기 중"
+L["Border color when the resurrection has been cast and the unit has not yet accepted it."]                                       =
+"부활이 시전되었지만 유닛이 아직 수락하지 않았을 때의 테두리 색상입니다."

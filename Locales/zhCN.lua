@@ -190,3 +190,29 @@ L["Low threshold (sec)"]                                                        
 L["Switch to the low-time color when remaining duration drops below this value (seconds)."]                                       =
 "当剩余时间低于此值（秒）时切换到低时间颜色。"
 L["Low-time color"]                                                                                                               = "低时间颜色"
+
+-- Resurrection Alert
+L["Resurrection"]                                                                                                                 = "复活"
+L["Resurrection Alert"]                                                                                                           = "复活提醒"
+L["Show a colored border on resurrection buttons depending on the target's resurrection status."]                                 =
+"根据目标的复活状态，在复活按钮上显示彩色边框。"
+L["Simulate resurrection alert"]                                                                                                  = "模拟复活提醒"
+L["Show all three border colors across the bars so you can adjust their appearance outside of combat."]                           =
+"在条上显示三种边框颜色，便于你在脱离战斗时调整外观。"
+L["Periodic resync"]                                                                                                              = "周期性重同步"
+L["Run a periodic full check to recover from missed death or resurrection events."]                                               =
+"定期执行完整检查，以恢复遗漏的死亡或复活事件。"
+L["How often the periodic resurrection resync runs."]                                                                             =
+"周期性复活重同步的执行频率。"
+L["Controls how fast the border pulses. Set to 0 for a fully static border."]                                                     =
+"控制边框脉冲速度。设为 0 则边框完全静态。"
+L["State Colors"]                                                                                                                 = "状态颜色"
+L["Dead (no incoming rez)"]                                                                                                       = "死亡（无复活施加）"
+L["Border color when the unit is dead with no resurrection in progress."]                                                         =
+"当单位死亡且没有进行中的复活时的边框颜色。"
+L["Casting resurrection"]                                                                                                         = "正在施放复活"
+L["Border color while a resurrection spell is being cast on the unit."]                                                           =
+"当复活法术正在对该单位施放时的边框颜色。"
+L["Resurrection pending"]                                                                                                         = "复活待接受"
+L["Border color when the resurrection has been cast and the unit has not yet accepted it."]                                       =
+"当复活已施放但单位尚未接受时的边框颜色。"

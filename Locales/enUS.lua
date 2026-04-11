@@ -177,3 +177,21 @@ L["Show remaining buff duration in the button corner when the button's spell is 
 L["Low threshold (sec)"]                                                                                                          = true
 L["Switch to the low-time color when remaining duration drops below this value (seconds)."]                                       = true
 L["Low-time color"]                                                                                                               = true
+
+-- Resurrection Alert
+L["Resurrection"]                                                                                                                 = true
+L["Resurrection Alert"]                                                                                                           = true
+L["Show a colored border on resurrection buttons depending on the target's resurrection status."]                                 = true
+L["Simulate resurrection alert"]                                                                                                  = true
+L["Show all three border colors across the bars so you can adjust their appearance outside of combat."]                           = true
+L["Periodic resync"]                                                                                                              = true
+L["Run a periodic full check to recover from missed death or resurrection events."]                                               = true
+L["How often the periodic resurrection resync runs."]                                                                             = true
+L["Controls how fast the border pulses. Set to 0 for a fully static border."]                                                     = true
+L["State Colors"]                                                                                                                 = true
+L["Dead (no incoming rez)"]                                                                                                       = true
+L["Border color when the unit is dead with no resurrection in progress."]                                                         = true
+L["Casting resurrection"]                                                                                                         = true
+L["Border color while a resurrection spell is being cast on the unit."]                                                           = true
+L["Resurrection pending"]                                                                                                         = true
+L["Border color when the resurrection has been cast and the unit has not yet accepted it."]                                       = true

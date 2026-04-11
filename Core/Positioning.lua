@@ -53,7 +53,7 @@ function SUB:ApplyAnchoredPositions()
 end
 
 -- Updates EnableMouse on all drag handles based on lock state and position mode.
--- In "suf" mode bars follow the SUF frames, so dragging is always disabled.
+-- In "suf" mode bars follow external unit frames, so dragging is disabled.
 function SUB:UpdateAllHandleInteractivity()
     local db = self.db.profile
     local canDrag = not db.locked and db.positionMode ~= "suf"

@@ -40,6 +40,7 @@ Locales\zhTW.lua
 
 Defaults.lua
 DispelData.lua
+ResurrectionData.lua
 SupportUnitButtons.lua
 
 Integrations\ShadowedUnitFrames.lua
@@ -49,6 +50,7 @@ Core\Positioning.lua
 Core\Layout.lua
 Core\Bars.lua
 Core\Dispel.lua
+Core\Resurrection.lua
 Core\Overlays\SpellRank.lua
 Core\Overlays\CastCount.lua
 Core\Overlays\ReagentCount.lua

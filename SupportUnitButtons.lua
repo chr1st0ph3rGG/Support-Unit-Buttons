@@ -47,6 +47,7 @@ SUB.masqueGroup         = nil
 SUB.syncing             = false
 SUB.dispelActiveUnits   = {}    -- unit → true when a dispellable debuff is active
 SUB.dispelAlertPreview  = false -- runtime only; simulates debuff state for options preview
+SUB.rezAlertPreview     = false -- runtime only; simulates rez state for options preview
 SUB.rosterDirty         = false
 SUB.emptyButtonsDirty   = false
 SUB.sufPosPending       = false
@@ -103,6 +104,8 @@ function SUB:OnInitialize()
     -- Dispel system: prefill the name→types map (best effort; completed in
     -- ApplyAllButtonStates once the full spell cache is loaded).
     self:BuildDispelNameTypes()
+    -- Resurrection system: same pattern, populated after SPELLS_CHANGED.
+    self:BuildRezNameSpells()
     -- Re-evaluate highlights when LibDispel updates the player's dispel list
     -- (talent/spec changes, learning new spells, etc.).
     if LibDispel then
@@ -123,6 +126,8 @@ function SUB:OnEnable()
     self:RegisterEvent("SPELLS_CHANGED", "ApplyAllButtonStates")
     -- Dispel alert: reevaluate highlights when a unit's auras change.
     self:RegisterEvent("UNIT_AURA", "OnUnitAura")
+    -- Resurrection alert: only register heavy runtime events while enabled.
+    self:UpdateRezEventRegistrations()
     -- Cast count: update when player mana or bag contents change.
     -- UNIT_POWER_FREQUENT fires on every regen tick (Retail/Cata+).
     -- UNIT_POWER_UPDATE fires on cast/spend.
@@ -148,9 +153,10 @@ function SUB:OnEnable()
     -- - Buff status countdown updates at a fixed 1s cadence.
     -- - Dispel highlight reconciliation at a configurable cadence as a safety
     --   net if UNIT_AURA updates are delayed/missed.
-    local buffTicker = CreateFrame("Frame")
-    buffTicker._buffT = 0
+    local buffTicker    = CreateFrame("Frame")
+    buffTicker._buffT   = 0
     buffTicker._dispelT = 0
+    buffTicker._rezT    = 0
     buffTicker:SetScript("OnUpdate", function(ticker, elapsed)
         local db = SUB.db and SUB.db.profile
         if not db then return end
@@ -173,6 +179,18 @@ function SUB:OnEnable()
             end
         else
             ticker._dispelT = 0
+        end
+
+        if db.rezAlert and db.rezAlertResync ~= false and not SUB.rezAlertPreview then
+            ticker._rezT = ticker._rezT + elapsed
+            local interval = db.rezAlertResyncInterval or 2.0
+            if interval < 0.1 then interval = 0.1 end
+            if ticker._rezT >= interval then
+                ticker._rezT = 0
+                SUB:ResyncRezHighlights()
+            end
+        else
+            ticker._rezT = 0
         end
     end)
 end

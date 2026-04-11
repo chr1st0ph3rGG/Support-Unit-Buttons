@@ -308,6 +308,9 @@ function SUB:HandleUnitAura(unit)
     if self.db.profile.showBuffStatus then
         self:UpdateBuffStatusesForUnit(unit)
     end
+    if self.db.profile.rezAlert then
+        self:UpdateRezOnUnitAura(unit)
+    end
 end
 
 -- Plays the alert sound if enabled and a sound is selected.

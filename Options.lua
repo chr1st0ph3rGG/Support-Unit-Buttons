@@ -295,6 +295,7 @@ function SUB:BuildOptionsTable()
 
                             ---------- ShadowedUnitFrames anchor ----------
                             sufPositioning = self:GetSUFOptionsGroup(),
+
                         },
                     },
 
@@ -1271,12 +1272,248 @@ function SUB:BuildOptionsTable()
                 },
             },
 
+            ---------- Resurrection tab ----------
+            resurrection = {
+                name  = L["Resurrection"],
+                type  = "group",
+                order = 4,
+                args  = {
+                    rezAlertGroup = {
+                        name   = L["Resurrection Alert"],
+                        type   = "group",
+                        inline = true,
+                        order  = 1,
+                        args   = {
+                            enable = {
+                                name  = L["Enable"],
+                                desc  = L
+                                    ["Show a colored border on resurrection buttons depending on the target's resurrection status."],
+                                type  = "toggle",
+                                order = 1,
+                                get   = function() return self.db.profile.rezAlert end,
+                                set   = function(_, v)
+                                    self.db.profile.rezAlert = v
+                                    self:UpdateRezEventRegistrations()
+                                    self:UpdateAllRezHighlights()
+                                end,
+                            },
+                            preview = {
+                                name     = L["Simulate resurrection alert"],
+                                desc     = L
+                                    ["Show all three border colors across the bars so you can adjust their appearance outside of combat."],
+                                type     = "toggle",
+                                order    = 2,
+                                disabled = function() return not self.db.profile.rezAlert end,
+                                get      = function() return SUB.rezAlertPreview end,
+                                set      = function(_, v)
+                                    SUB.rezAlertPreview = v
+                                    SUB:UpdateAllRezHighlights()
+                                end,
+                            },
+                            periodicResync = {
+                                name     = L["Periodic resync"],
+                                desc     = L
+                                    ["Run a periodic full check to recover from missed death or resurrection events."],
+                                type     = "toggle",
+                                order    = 3,
+                                disabled = function() return not self.db.profile.rezAlert end,
+                                get      = function() return self.db.profile.rezAlertResync ~= false end,
+                                set      = function(_, v)
+                                    self.db.profile.rezAlertResync = v
+                                    if v then self:UpdateAllRezHighlights() end
+                                end,
+                            },
+                            periodicResyncInterval = {
+                                name     = L["Resync interval (sec)"],
+                                desc     = L["How often the periodic resurrection resync runs."],
+                                type     = "range",
+                                order    = 4,
+                                min      = 0.2,
+                                max      = 5.0,
+                                step     = 0.1,
+                                disabled = function()
+                                    return not self.db.profile.rezAlert
+                                        or self.db.profile.rezAlertResync == false
+                                end,
+                                get      = function()
+                                    return self.db.profile.rezAlertResyncInterval or 2.0
+                                end,
+                                set      = function(_, v)
+                                    self.db.profile.rezAlertResyncInterval = v
+                                end,
+                            },
+                        },
+                    },
+                    rezAppearanceGroup = {
+                        name     = L["Border Appearance"],
+                        type     = "group",
+                        inline   = true,
+                        order    = 2,
+                        disabled = function() return not self.db.profile.rezAlert end,
+                        args     = {
+                            shape = {
+                                name   = L["Shape"],
+                                desc   = L["Border shape. Use Circle for round Masque button skins."],
+                                type   = "select",
+                                order  = 1,
+                                values = {
+                                    square = L["Square"],
+                                    circle = L["Circle"],
+                                },
+                                get    = function()
+                                    return self.db.profile.rezAlertShape or "square"
+                                end,
+                                set    = function(_, v)
+                                    self.db.profile.rezAlertShape = v
+                                    self:UpdateAllRezHighlights()
+                                end,
+                            },
+                            pulseSpeed = {
+                                name  = L["Pulse Speed"],
+                                desc  = L["Controls how fast the border pulses. Set to 0 for a fully static border."],
+                                type  = "range",
+                                order = 2,
+                                min   = 0.0,
+                                max   = 5.0,
+                                step  = 0.1,
+                                get   = function()
+                                    return self.db.profile.rezAlertPulseSpeed or 0.0
+                                end,
+                                set   = function(_, v)
+                                    self.db.profile.rezAlertPulseSpeed = v
+                                end,
+                            },
+                            alphaMin = {
+                                name  = L["Alpha minimum"],
+                                desc  = L
+                                    ["Minimum opacity at the trough of the animation. 0 = fully fades out, above 0 = always visible."],
+                                type  = "range",
+                                order = 3,
+                                min   = 0.0,
+                                max   = 1.0,
+                                step  = 0.05,
+                                get   = function()
+                                    return self.db.profile.rezAlertAlphaMin or 1.0
+                                end,
+                                set   = function(_, v)
+                                    self.db.profile.rezAlertAlphaMin = v
+                                end,
+                            },
+                            alphaMax = {
+                                name  = L["Alpha maximum"],
+                                desc  = L["Maximum opacity at the peak of the animation."],
+                                type  = "range",
+                                order = 4,
+                                min   = 0.0,
+                                max   = 1.0,
+                                step  = 0.05,
+                                get   = function()
+                                    return self.db.profile.rezAlertAlphaMax or 1.0
+                                end,
+                                set   = function(_, v)
+                                    self.db.profile.rezAlertAlphaMax = v
+                                end,
+                            },
+                            borderWidth = {
+                                name  = L["Border Width"],
+                                desc  = L["Border width in pixels. 0 = automatic (6 % of button size)."],
+                                type  = "range",
+                                order = 5,
+                                min   = 0,
+                                max   = 12,
+                                step  = 1,
+                                get   = function()
+                                    return self.db.profile.rezAlertBorderWidth or 0
+                                end,
+                                set   = function(_, v)
+                                    self.db.profile.rezAlertBorderWidth = v
+                                    self:UpdateAllRezHighlights()
+                                end,
+                            },
+                            borderPadding = {
+                                name  = L["Border Padding"],
+                                desc  = L
+                                    ["Distance from the button edge in pixels. Positive = extends outside the button, negative = inset inside the button."],
+                                type  = "range",
+                                order = 6,
+                                min   = -8,
+                                max   = 10,
+                                step  = 1,
+                                get   = function()
+                                    local v = self.db.profile.rezAlertPadding
+                                    return v ~= nil and v or 3
+                                end,
+                                set   = function(_, v)
+                                    self.db.profile.rezAlertPadding = v
+                                    self:UpdateAllRezHighlights()
+                                end,
+                            },
+                        },
+                    },
+                    rezColorsGroup = {
+                        name     = L["State Colors"],
+                        type     = "group",
+                        inline   = true,
+                        order    = 3,
+                        disabled = function() return not self.db.profile.rezAlert end,
+                        args     = {
+                            colorDead = {
+                                name  = L["Dead (no incoming rez)"],
+                                desc  = L["Border color when the unit is dead with no resurrection in progress."],
+                                type  = "color",
+                                order = 1,
+                                get   = function()
+                                    local c = self.db.profile.rezAlertColorDead
+                                    return c.r, c.g, c.b
+                                end,
+                                set   = function(_, r, g, b)
+                                    local c = self.db.profile.rezAlertColorDead
+                                    c.r, c.g, c.b = r, g, b
+                                    self:UpdateAllRezHighlights()
+                                end,
+                            },
+                            colorCasting = {
+                                name  = L["Casting resurrection"],
+                                desc  = L["Border color while a resurrection spell is being cast on the unit."],
+                                type  = "color",
+                                order = 2,
+                                get   = function()
+                                    local c = self.db.profile.rezAlertColorCasting
+                                    return c.r, c.g, c.b
+                                end,
+                                set   = function(_, r, g, b)
+                                    local c = self.db.profile.rezAlertColorCasting
+                                    c.r, c.g, c.b = r, g, b
+                                    self:UpdateAllRezHighlights()
+                                end,
+                            },
+                            colorPending = {
+                                name  = L["Resurrection pending"],
+                                desc  = L
+                                    ["Border color when the resurrection has been cast and the unit has not yet accepted it."],
+                                type  = "color",
+                                order = 3,
+                                get   = function()
+                                    local c = self.db.profile.rezAlertColorPending
+                                    return c.r, c.g, c.b
+                                end,
+                                set   = function(_, r, g, b)
+                                    local c = self.db.profile.rezAlertColorPending
+                                    c.r, c.g, c.b = r, g, b
+                                    self:UpdateAllRezHighlights()
+                                end,
+                            },
+                        },
+                    },
+                },
+            },
+
             ---------- Profiles ----------
             profiles = AceDBOpt:GetOptionsTable(self.db),
         }, -- close options.args
     }
 
-    options.args.profiles.order = 4
+    options.args.profiles.order = 5
 
     AceCfg:RegisterOptionsTable("SupportUnitButtons", options)
     AceCfgD:AddToBlizOptions("SupportUnitButtons", "SupportUnitButtons")
