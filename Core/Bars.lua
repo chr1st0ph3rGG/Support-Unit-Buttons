@@ -95,6 +95,18 @@ local function WrapButtonForUnitTarget(header, btn)
     end
 end
 
+-- Disables the ActionButton checked state on SUB buttons while keeping hover highlight.
+local function DisableButtonHighlightAndChecked(btn)
+    btn.SetChecked = function()
+        return
+    end
+
+    local checked = btn:GetCheckedTexture()
+    if checked then
+        checked:SetAlpha(0)
+    end
+end
+
 -------------------------------------------------------------------------------
 -- Text-Overlay Attachment
 --
@@ -247,6 +259,7 @@ function SUB:CreateBar(unit)
 
     for i = 1, MAX_SHARED do
         local btn = LAB:CreateButton(base + i, fn .. "_S" .. i, header, nil)
+        DisableButtonHighlightAndChecked(btn)
         btn:SetState(0, "empty", nil) -- initialise "type" attribute so OnReceiveDrag works
         btn:SetAttribute("unit", unit)
         btn:SetAttribute("SUB_dragModifier", dragMod)
@@ -265,6 +278,7 @@ function SUB:CreateBar(unit)
 
     for i = 1, MAX_INDIVIDUAL do
         local btn = LAB:CreateButton(base + MAX_SHARED + i, fn .. "_I" .. i, header, nil)
+        DisableButtonHighlightAndChecked(btn)
         btn:SetState(0, "empty", nil)
         btn:SetAttribute("unit", unit)
         btn:SetAttribute("SUB_dragModifier", dragMod)
